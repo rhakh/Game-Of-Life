@@ -1,0 +1,9 @@
+obj
+obj/*
+game_of_life
+.qmake.stash
+cmake-build-debug/
+.idea/
+.DS_Store
+a.out
+.vscode

@@ -1,33 +1,55 @@
-#include "GameOfLife.h"
+#include <sstream>
+#include "GameOfLife.hpp"
 
-GameOfLife::GameOfLife(unsigned int height = CELLMAP_HEIGHT, unsigned int width = CELLMAP_WIDTH)
-    : height(height), width(width)
+GameOfLife::GameOfLife(unsigned int height, unsigned int width, const std::vector<uint8_t> &map)
+    : height(height), width(width), iteration(0)
 {
     this->length = height * width;
     this->map = std::make_unique<std::vector<uint8_t>>(this->length);
     this->tmp_map = std::make_unique<std::vector<uint8_t>>(this->length);
+
+    auto it = map.begin();
+    for (unsigned int y = 0; y < height; y++) {
+        for (unsigned int x = 0; x < width; x++) {
+            if (*it == 1)
+                setCell(x, y);
+            it++;
+        }
+    }
+}
+
+GameOfLife::GameOfLife(unsigned int height, unsigned int width)
+    : height(height), width(width), iteration(0)
+{
+    this->length = height * width;
+    this->map = std::make_unique<std::vector<uint8_t>>(this->length);
+    this->tmp_map = std::make_unique<std::vector<uint8_t>>(this->length);
+    randomFillMap();
 }
 
 GameOfLife::~GameOfLife() {}
 
 void GameOfLife::printMap() {
-    // TODO: use sstream to construct output, and then print it
+    std::stringstream ss;
     auto &cell_map = *(this->map);
 
     for (unsigned int i = 0; i < this->length; i++) {
         if ((cell_map[i] & 0x01) == 1)
-            std::cout << "*";
+            ss << "*";
         else
-            std::cout << ".";
+            ss << ".";
 
         if ((i + 1) % width == 0)
-            std::cout << std::endl;
+            ss << std::endl;
     }
+
+    std::cout << ss.str();
 }
 
 void GameOfLife::makeNextGeneration() {
     std::vector<uint8_t> cell_map(*(this->map));
 
+    this->iteration++;
     for (unsigned int y = 0; y < height; y++) {
         for (unsigned int x = 0; x < width; x++) {
             unsigned int point = (y * width) + x;
@@ -124,4 +146,8 @@ void GameOfLife::clearCell(unsigned int x, unsigned int y) {
     cell_map[point + right + bottom] -= 0x02;
     cell_map[point + bottom] -= 0x02;
     cell_map[point + bottom + left] -= 0x02;
+}
+
+unsigned int GameOfLife::getIteration() const {
+    return (this->iteration);
 }
