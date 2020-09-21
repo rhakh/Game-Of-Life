@@ -30,12 +30,15 @@ int main(int argc, char **argv) {
 
     GameOfLife game(cli.getHeight(), cli.getWidth(), cli.getMap());
 
-    for (int i = 0; i < 100000; i++) {
-        std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
-        game.printMap();
-        game.makeNextGeneration();
-        usleep(25000);
-        std::system("clear");
+    for (int i = 0; i < 1500; i++) {
+        // std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
+        // game.printMap();
+
+        // game.makeNextGeneration();
+        game.makeNextGenerationConcurrent();
+
+        // usleep(25000);
+        // std::system("clear");
     }
 
     return (0);

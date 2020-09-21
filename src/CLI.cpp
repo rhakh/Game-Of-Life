@@ -130,13 +130,6 @@ void	CLI::parseFile() {
             throw CLI_InvalidMap();
         }
     }
-
-    // delete
-    std::cout << "height = " << height << " width = " << width << std::endl;
-    std::for_each(map.begin(), map.end(),
-				[](const auto &e) {
-					std::cout << e << " ";
-				});
 }
 
 void	CLI::startLogic() const {
