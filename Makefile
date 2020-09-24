@@ -36,6 +36,13 @@ OBJ = $(addprefix $(OBJDIR),$(_SRC:.cpp=.o))
 
 all: make_dir $(NAME)
 
+test:
+	$(CXX) $(INCLUDE_AND_LIBS) -o test_game_of_life \
+		src/GameOfLife.cpp \
+		src/test_GameOfLife.cpp \
+		src/CLI.cpp \
+		$(FLAGS) -lgtest
+
 make_dir:
 	mkdir -p $(OBJDIR)
 

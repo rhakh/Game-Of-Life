@@ -17,8 +17,9 @@ void randomGame(CLI &cli) {
     }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
     CLI cli(argc, argv);
+    bool verbose = false, concurrent = false;
 
     if (cli.isFlagSet("help"))
         return (0);
@@ -28,15 +29,34 @@ int main(int argc, char **argv) {
         return (0);
     }
 
+    if (cli.isFlagSet("verbose"))
+        verbose = true;
+
+    if (cli.isFlagSet("concurrent"))
+        concurrent = true;
+
     GameOfLife game(cli.getHeight(), cli.getWidth(), cli.getMap());
 
-    for (int i = 0; i < 100000; i++) {
-        std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
-        game.printMap();
-        game.makeNextGeneration();
-        usleep(25000);
-        std::system("clear");
+    for (int i = 0; i < 1500; i++) {
+        if (verbose) {
+            std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
+            game.printMap();
+            usleep(25000);
+            std::system("clear");
+        }
+
+        if (concurrent)
+            game.makeNextGenerationConcurrent();
+        else
+            game.makeNextGeneration();
     }
 
     return (0);
 }
+
+/* TODO:
+libs for compiling
+sudo apt-get install libboost-all-dev
+sudo apt install libgtest-dev https://medium.com/@rvarago/introduction-to-google-c-unit-testing-3d564c30f3b0
+
+*/

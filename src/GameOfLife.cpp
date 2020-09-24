@@ -1,4 +1,6 @@
 #include <sstream>
+#include <thread>
+#include <algorithm>
 #include "GameOfLife.hpp"
 
 GameOfLife::GameOfLife(unsigned int height, unsigned int width, const std::vector<uint8_t> &map)
@@ -47,6 +49,7 @@ void GameOfLife::printMap() {
 }
 
 void GameOfLife::makeNextGeneration() {
+    // TODO: use tmp_map instead from cell_map
     std::vector<uint8_t> cell_map(*(this->map));
 
     this->iteration++;
@@ -150,4 +153,73 @@ void GameOfLife::clearCell(unsigned int x, unsigned int y) {
 
 unsigned int GameOfLife::getIteration() const {
     return (this->iteration);
+}
+
+unsigned int GameOfLife::getLiveNeighbors(unsigned int x, unsigned int y, const std::vector<uint8_t> &cell_map) {
+    unsigned int liveNeighbors;
+    int point = (y * this->width) + x;
+    int left, right, top, bottom;
+
+    left = (x == 0) ? width - 1 : -1;
+    right = (x == width - 1) ? -(width - 1) : 1;
+    top = (y == 0) ? length - width : -width;
+    bottom = (y == height - 1) ? -(length - width) : width;
+
+    liveNeighbors = (cell_map[point + left] & 0x01) +
+                    (cell_map[point + left + top] & 0x01) +
+                    (cell_map[point + top] & 0x01) +
+                    (cell_map[point + top + right] & 0x01) +
+                    (cell_map[point + right] & 0x01) +
+                    (cell_map[point + right + bottom] & 0x01) +
+                    (cell_map[point + bottom] & 0x01) +
+                    (cell_map[point + bottom + left] & 0x01);
+    
+    return liveNeighbors;
+}
+
+void GameOfLife::setCellRawState(unsigned int x, unsigned int y, unsigned int state, unsigned int neighbors)  {
+    auto &cell_map = *(this->map);
+    int point = (y * this->width) + x;
+
+    // Is alive ?
+    if (state) {
+        // Overpopulation or underpopulation - than die
+        if (neighbors != 2 && neighbors != 3)
+            cell_map[point] = (neighbors << 1);
+    } else if (neighbors == 3) {
+        // Has 3 neighbours - than revive
+        cell_map[point] = (neighbors << 1) | 0x01;
+    }
+}
+
+void GameOfLife::makeNextGenerationConcurrent() {
+    auto &cell_map = *(this->tmp_map);
+    std::vector<std::thread> threads(std::thread::hardware_concurrency());
+    auto process_line = [this, &cell_map](unsigned int y_start, unsigned int y_end) {
+        for (unsigned int y = y_start; y < y_end; y++) {
+            for (unsigned int x = 0; x < width; x++) {
+                unsigned int point = (y * width) + x;
+                auto liveNeighbors = getLiveNeighbors(x, y, cell_map);
+                setCellRawState(x, y, cell_map[point] & 0x01, liveNeighbors);
+            }
+        }
+    };
+
+    // Copy original map to tmp
+    *tmp_map = *map;
+
+    this->iteration++;
+    auto cores = std::thread::hardware_concurrency();
+    unsigned int step = height / cores;
+    for (unsigned int y = 0; y < height; y += step) {
+        if (y + step < height)
+            threads.emplace_back(process_line, y, y + step);
+        else
+            threads.emplace_back(process_line, y, height);
+    }
+
+    for (auto &thread : threads) {
+        if (thread.joinable())
+            thread.join();
+    }
 }

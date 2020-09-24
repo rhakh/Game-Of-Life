@@ -45,7 +45,7 @@ bool	CLI::getFlag(const std::string &flag, std::string &result) const {
 	return (false);
 }
 
-bool	CLI::processArguments(int argc, char **argv) {
+bool	CLI::processArguments(int argc, const char **argv) {
 	namespace po = boost::program_options;
 	try {
 		po::store(po::parse_command_line(argc, argv, this->desc), this->vm);
@@ -65,11 +65,14 @@ bool	CLI::processArguments(int argc, char **argv) {
 	return (true);
 }
 
-CLI::CLI(int argc, char **argv) : desc("Options") {
+CLI::CLI(int argc, const char **argv) : desc("Options") {
+    // TODO: add description
 	namespace po = boost::program_options;
 	this->desc.add_options()
 			("help,h", "Print help")
-			("file,f", po::value<std::string>(), "Filename of loaded map");
+			("file,f", po::value<std::string>(), "Filename of loaded map")
+            ("concurrent,c", "Use concurrent algorithm for making generation"),
+            ("verbose,v", "Print to terminal map on each generation");
 
 	if (!processArguments(argc, argv))
 		throw CLI_invalidArguments();
@@ -130,13 +133,6 @@ void	CLI::parseFile() {
             throw CLI_InvalidMap();
         }
     }
-
-    // delete
-    std::cout << "height = " << height << " width = " << width << std::endl;
-    std::for_each(map.begin(), map.end(),
-				[](const auto &e) {
-					std::cout << e << " ";
-				});
 }
 
 void	CLI::startLogic() const {

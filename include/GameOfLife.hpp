@@ -19,8 +19,13 @@ private:
     unsigned int width;
     unsigned int iteration;
 
+    // For Serial version
     void setCell(unsigned int x, unsigned int y);
     void clearCell(unsigned int x, unsigned int y);
+
+    // For Concurrent version
+    unsigned int getLiveNeighbors(unsigned int x, unsigned int y, const std::vector<uint8_t> &cell_map);
+    void setCellRawState(unsigned int x, unsigned int y, unsigned int state, unsigned int neighbors);
 
 public:
     // TODO: move, copy constructors
@@ -30,6 +35,7 @@ public:
 
     void printMap();
     void makeNextGeneration();
+    void makeNextGenerationConcurrent();
     void randomFillMap();
     unsigned int getIteration() const;
 };
