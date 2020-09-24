@@ -16,10 +16,10 @@ class CLI {
     std::vector<uint8_t>    map;
     unsigned int            height, width;
 
-    bool    processArguments(int argc, char **argv);
+    bool    processArguments(int argc, const char **argv);
     void	parseFile();
 public:
-    CLI(int argc, char **argv);
+    CLI(int argc, const char **argv);
     ~CLI();
 
     void    startLogic() const;

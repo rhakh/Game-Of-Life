@@ -1,3 +1,4 @@
+test_game_of_life
 obj
 obj/*
 game_of_life
@@ -7,3 +8,4 @@ cmake-build-debug/
 .DS_Store
 a.out
 .vscode
+.ccls-cache
