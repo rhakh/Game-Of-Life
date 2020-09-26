@@ -14,7 +14,7 @@ class CLI {
 
     std::string             fileName;
     std::vector<uint8_t>    map;
-    unsigned int            height, width;
+    unsigned int            height, width, dump;
 
     bool    processArguments(int argc, const char **argv);
     void	parseFile();

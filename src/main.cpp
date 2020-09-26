@@ -19,6 +19,8 @@ void randomGame(CLI &cli) {
 
 int main(int argc, const char **argv) {
     CLI cli(argc, argv);
+    std::string dump_s;
+    unsigned int dump = 0;
     bool verbose = false, concurrent = false;
 
     if (cli.isFlagSet("help"))
@@ -35,14 +37,22 @@ int main(int argc, const char **argv) {
     if (cli.isFlagSet("concurrent"))
         concurrent = true;
 
+    if (cli.getFlag("dump", dump_s))
+        dump = std::atoi(dump_s.c_str());
+
     GameOfLife game(cli.getHeight(), cli.getWidth(), cli.getMap());
 
-    for (int i = 0; i < 1500; i++) {
+    for (unsigned int i = 0; i < 1500; i++) {
         if (verbose) {
             std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
             game.printMap();
             usleep(25000);
             std::system("clear");
+        }
+
+        if (dump && dump == i) {
+            std::cout << "Dump generation " << game.getIteration() << std::endl;
+            std::cout << game.getDump() << std::endl;
         }
 
         if (concurrent)

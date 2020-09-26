@@ -71,7 +71,8 @@ CLI::CLI(int argc, const char **argv) : desc("Options") {
 	this->desc.add_options()
 			("help,h", "Print help")
 			("file,f", po::value<std::string>(), "Filename of loaded map")
-            ("concurrent,c", "Use concurrent algorithm for making generation"),
+            ("concurrent,c", "Use concurrent algorithm for making generation")
+            ("dump,d", po::value<std::string>(), "Dump map at specific iteration")
             ("verbose,v", "Print to terminal map on each generation");
 
 	if (!processArguments(argc, argv))

@@ -38,4 +38,5 @@ public:
     void makeNextGenerationConcurrent();
     void randomFillMap();
     unsigned int getIteration() const;
+    std::string getDump() const;
 };

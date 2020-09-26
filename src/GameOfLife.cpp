@@ -1,6 +1,7 @@
 #include <sstream>
 #include <thread>
 #include <algorithm>
+#include <sstream>
 #include "GameOfLife.hpp"
 
 GameOfLife::GameOfLife(unsigned int height, unsigned int width, const std::vector<uint8_t> &map)
@@ -153,6 +154,24 @@ void GameOfLife::clearCell(unsigned int x, unsigned int y) {
 
 unsigned int GameOfLife::getIteration() const {
     return (this->iteration);
+}
+
+std::string GameOfLife::getDump() const {
+    std::stringstream ss;
+    auto &cell_map = *(this->map);
+
+    for (unsigned int y = 0; y < height; y++) {
+        for (unsigned int x = 0; x < width; x++) {
+            unsigned int point = (y * width) + x;
+            if (cell_map[point] & 0x01)
+                ss << "*";
+            else
+                ss << ".";
+        }
+        ss << std::endl;
+    }
+
+    return ss.str();
 }
 
 unsigned int GameOfLife::getLiveNeighbors(unsigned int x, unsigned int y, const std::vector<uint8_t> &cell_map) {
