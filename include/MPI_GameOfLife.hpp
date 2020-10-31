@@ -1,5 +1,5 @@
-#ifndef GAME_OF_LIFE_HPP
-#define GAME_OF_LIFE_HPP
+#ifndef MPI_GAME_OF_LIFE_HPP
+#define MPI_GAME_OF_LIFE_HPP
 
 #include <iostream>
 #include <stdint.h>
@@ -10,7 +10,7 @@
 #define CELLMAP_HEIGHT  25
 #define CELLMAP_WIDTH   80
 
-class GameOfLife
+class MPI_GameOfLife
 {
     typedef std::unique_ptr<std::vector<uint8_t>> map_ptr;
 
@@ -26,10 +26,6 @@ private:
     void setCell(unsigned int x, unsigned int y);
     void clearCell(unsigned int x, unsigned int y);
 
-    // For Concurrent version
-    unsigned int getLiveNeighbors(unsigned int x, unsigned int y, const std::vector<uint8_t> &cell_map);
-    void setCellRawState(unsigned int x, unsigned int y, unsigned int state, unsigned int neighbors);
-
 public:
     // TODO: move, copy constructors
     GameOfLife(unsigned int height, unsigned int width);
@@ -38,10 +34,9 @@ public:
 
     void printMap();
     void makeNextGeneration();
-    void makeNextGenerationConcurrent();
     void randomFillMap();
     unsigned int getIteration() const;
     std::string getDump() const;
 };
 
-#endif // GAME_OF_LIFE_HPP
+#endif MPI_GAME_OF_LIFE_HPP

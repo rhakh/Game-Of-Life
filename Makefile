@@ -36,7 +36,7 @@ OBJ = $(addprefix $(OBJDIR),$(_SRC:.cpp=.o))
 
 all: make_dir $(NAME)
 
-test:
+test: src/GameOfLife.cpp src/test_GameOfLife.cpp src/CLI.cpp
 	$(CXX) $(INCLUDE_AND_LIBS) -o test_game_of_life \
 		src/GameOfLife.cpp \
 		src/test_GameOfLife.cpp \

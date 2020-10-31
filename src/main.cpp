@@ -42,7 +42,7 @@ int main(int argc, const char **argv) {
 
     GameOfLife game(cli.getHeight(), cli.getWidth(), cli.getMap());
 
-    for (unsigned int i = 0; i < 1500; i++) {
+    for (unsigned int i = 0; i < 3000; i++) {
         if (verbose) {
             std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
             game.printMap();
