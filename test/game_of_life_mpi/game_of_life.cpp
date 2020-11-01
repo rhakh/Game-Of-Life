@@ -7,6 +7,54 @@
 
 int TAG = 0;  // for MPI communications
 
+void setCell(Grid &grid, int i, int j) {
+    grid[i][j] |= 0x1;
+
+    grid[i - 1][j - 1] += 0x2;
+    grid[i - 1][j - 0] += 0x2;
+    grid[i - 1][j + 1] += 0x2;
+
+    grid[i - 0][j - 1] += 0x2;
+    grid[i - 0][j + 1] += 0x2;
+
+    grid[i + 1][j - 1] += 0x2;
+    grid[i + 1][j - 0] += 0x2;
+    grid[i + 1][j + 1] += 0x2;
+}
+
+void clearCell(Grid &grid, int i, int j) {
+    grid[i][j] &= ~0x1;
+
+    grid[i - 1][j - 1] -= 0x2;
+    grid[i - 1][j - 0] -= 0x2;
+    grid[i - 1][j + 1] -= 0x2;
+
+    grid[i - 0][j - 1] -= 0x2;
+    grid[i - 0][j + 1] -= 0x2;
+
+    grid[i + 1][j - 1] -= 0x2;
+    grid[i + 1][j - 0] -= 0x2;
+    grid[i + 1][j + 1] -= 0x2;
+}
+
+Grid make_new_grid(Grid &grid) {
+    Grid ret;
+    int height = grid.size();
+    int width = grid[0].size();
+
+    for (int i = 0; i < height; i++)
+        ret.emplace_back(width);
+    
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (grid[i][j] == alive)
+                setCell(ret, i, j);
+        }
+    }
+
+    return ret;
+}
+
 Grid tick_grid_n_times(Grid grid, int times_to_tick)
 {
     int my_rank, total_num_proc;
@@ -14,11 +62,11 @@ Grid tick_grid_n_times(Grid grid, int times_to_tick)
     MPI_Comm_size(MPI_COMM_WORLD, &total_num_proc);
     double start_time = MPI_Wtime();
 
-    
+    grid = std::move(make_new_grid(grid));
 
     Grid grid_with_halo = add_halo_to_grid(grid);
     for (int i = 0; i < times_to_tick; ++i) {
-        grid_with_halo = tick_chunk(grid_with_halo, my_rank, total_num_proc);
+        tick_chunk(grid_with_halo, my_rank, total_num_proc);
     }
 
     int grid_width = grid_with_halo.size() - 2;
@@ -53,9 +101,8 @@ Grid tick_grid_n_times(Grid grid, int times_to_tick)
     }
 }
 
-Grid tick_chunk(Grid grid_with_halo, int my_rank, int num_proc)
+void tick_chunk(Grid &grid_with_halo, int my_rank, int num_proc)
 {
-    Grid result = grid_with_halo;
     int grid_width = grid_with_halo.size() - 2;
     int chunk_beginning = calculate_chunk_beginning(grid_width, my_rank, num_proc);
     // end index is not included in chunk
@@ -70,13 +117,22 @@ Grid tick_chunk(Grid grid_with_halo, int my_rank, int num_proc)
 
     // +1 offset because chunk is calculated without the halo
     for (int x = chunk_beginning+1; x < chunk_end+1; ++x) {
-        for (uint y = 1; y < grid_with_halo[0].size()-1; ++y) { // -1 offset to not touch halo
-            int neighbors = count_neighbors(x, y, grid_with_halo);
-            CellState new_state = next_cell_state(grid_with_halo[x][y], neighbors);
-            result[x][y] = new_state;
+        for (int y = 1; y < grid_with_halo[0].size()-1; ++y) { // -1 offset to not touch halo
+            int live_cells_cnt = grid_with_halo[x][y] >> 1;
+
+            // Is alive ?
+            if (grid_with_halo[x][y] & 0x01) {
+                // Overpopulation or underpopulation - than die
+                if (live_cells_cnt != 2 && live_cells_cnt != 3)
+                    clearCell(grid_with_halo, x, y);
+            } else if (live_cells_cnt == 3) {
+                // Has 3 neighbours - than revive
+                setCell(grid_with_halo, x, y);
+            }
+
         }
     }
-    int column_height = result[0].size() - 2 /*halo*/;
+    int column_height = grid_with_halo[0].size() - 2 /*halo*/;
     bool there_is_chunk_at_left = my_rank != 0;
     if(there_is_chunk_at_left) {
         // receive other side of the left border
@@ -85,12 +141,17 @@ Grid tick_chunk(Grid grid_with_halo, int my_rank, int num_proc)
         int other_side_border = my_first_column - 1;
         // MPI_INT because CellState enum is in fact an int
         // [1] to not send halo
-        MPI_Recv(&result[other_side_border][1], column_height, MPI_INT, src, TAG,
+        std::vector<CellState> tmp(column_height);
+        MPI_Recv(&tmp, column_height, MPI_INT, src, TAG,
                  MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+
+        grid_with_halo[other_side_border][1];
+        for (int i = 1; i < column_height; i++)
+            grid_with_halo[other_side_border][i] += tmp[i - 1] >> 1;
 
         //  send my side of the left border
         int dest = my_rank - 1;  // previous process
-        MPI_Send(&result[my_first_column][1], column_height, MPI_INT, dest, TAG,
+        MPI_Send(&grid_with_halo[my_first_column][1], column_height, MPI_INT, dest, TAG,
                  MPI_COMM_WORLD);
     }
     int last_process = num_proc - 1;
@@ -99,15 +160,19 @@ Grid tick_chunk(Grid grid_with_halo, int my_rank, int num_proc)
         // send my side of the right border
         int dest = my_rank + 1;  // next process
         int my_last_column = chunk_end - 1/*chunk_end is exculded from chunk*/ + 1/*halo*/;
-        MPI_Send(&result[my_last_column][1], column_height, MPI_INT, dest, TAG,
+        MPI_Send(&grid_with_halo[my_last_column][1], column_height, MPI_INT, dest, TAG,
                  MPI_COMM_WORLD);
         // receive other side of the right border
         int src = my_rank + 1;  // next process
         int other_side_border = my_last_column + 1;
-        MPI_Recv(&result[other_side_border][1], column_height, MPI_INT, src, TAG,
+        std::vector<CellState> tmp(column_height);
+        MPI_Recv(&tmp, column_height, MPI_INT, src, TAG,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        
+        grid_with_halo[other_side_border][1];
+        for (int i = 1; i < column_height; i++)
+            grid_with_halo[other_side_border][i] += tmp[i - 1] >> 1;
     }
-    return result;
 }
 
 int calculate_chunk_beginning(int grid_size, int my_rank, int num_proc)

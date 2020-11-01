@@ -6,9 +6,9 @@
 using namespace std;
 
 // public
-enum CellState { dead, alive };
-// typedef uint8_t CellState;
-// enum CellState_e { dead, alive };
+// enum CellState { dead, alive };
+typedef uint8_t CellState;
+enum CellState_e { dead, alive };
 typedef vector<vector<CellState>> Grid;
 void show_grid(Grid grid);
 template<typename T> vector<vector<T>> transpose_grid(vector<vector<T>> grid);
@@ -18,7 +18,7 @@ Grid tick_grid_n_times(Grid grid, int times_to_tick);
 // private
 Grid add_halo_to_grid(Grid grid);
 Grid remove_halo_from_grid(Grid grid);
-Grid tick_chunk(Grid grid_with_halo, int my_rank, int num_proc);
+void tick_chunk(Grid &grid_with_halo, int my_rank, int num_proc);
 int calculate_chunk_beginning(int grid_size, int my_rank, int num_proc);
 int calculate_chunk_end(int grid_size, int my_rank, int num_proc);
 void add_dead_cells_left_and_right(Grid& grid);

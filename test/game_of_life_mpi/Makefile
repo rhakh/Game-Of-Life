@@ -1,5 +1,5 @@
 CC=mpic++
-CFLAGS=-Wall -Wextra -Wpedantic -std=c++14 -O2
+CFLAGS=-Wall -Wextra -Wpedantic -std=c++14 -g
 
 main_game_of_life_mpi: main_game_of_life_mpi.o game_of_life.o test_helpers.o
 	$(CC) -o main_game_of_life_mpi main_game_of_life_mpi.o game_of_life.o test_helpers.o $(CFLAGS)
