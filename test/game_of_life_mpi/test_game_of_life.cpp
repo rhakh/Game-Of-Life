@@ -61,6 +61,24 @@ Grid conways_pentadecathlon_state_7 = grid_int_to_grid({
         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
             });
 
+void print_grid(Grid &grid, std::string name) {
+    std::cout << "--- Print " << name << " grid:" << std::endl;
+    for (int y = 0; y < grid[0].size(); y++) {
+        for (int x = 0; x < grid.size(); x++) {
+            std::cout << (int)(grid[x][y] & 0x01) << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void clear_num_of_neighbours(Grid &grid) {
+    for (int y = 0; y < grid[0].size(); y++) {
+        for (int x = 0; x < grid.size(); x++) {
+            grid[x][y] &= 0x01;
+        }
+    }
+}
+
 TEST_CASE("23/3 dead with 3 neighbors → born")
 {
     int alive_neighbors = 3;
@@ -150,17 +168,31 @@ TEST_CASE("23/3 blinker one generation")
 {
     Grid result = tick_grid_n_times(grid_1, 1);
     Grid expected = grid_2;
+
+    // print_grid(grid_1, "grid_1");
+    // print_grid(result, "result");
+    // print_grid(expected, "expected");
+    clear_num_of_neighbours(result);
+
     REQUIRE( result == expected );
 }
 
 TEST_CASE("23/3 blinker two and four generations should be the same")
 {
-    Grid result = tick_grid_n_times(tick_grid_n_times(grid_1, 1), 1);
+    // Grid result = tick_grid_n_times(tick_grid_n_times(grid_1, 1), 1);
+    Grid result = tick_grid_n_times(grid_1, 2);
     Grid expected = grid_1;
+
+    // print_grid(grid_1, "grid_1");
+    // print_grid(result, "result");
+    // print_grid(expected, "expected");
+    clear_num_of_neighbours(result);
+
     REQUIRE( result == expected );
 
     result = tick_grid_n_times(grid_1, 4);
     expected = grid_1;
+    clear_num_of_neighbours(result);
     REQUIRE( result == expected );
 }
 
@@ -168,10 +200,22 @@ TEST_CASE("23/3 blinker conway's pentadecathlon")
 {
     Grid result = tick_grid_n_times(conways_pentadecathlon_state_11, 11);
     Grid expected = conways_pentadecathlon_state_7;
+
+    // print_grid(conways_pentadecathlon_state_11, "conways_pentadecathlon_state_11");
+    // print_grid(result, "result");
+    // print_grid(expected, "expected");
+    clear_num_of_neighbours(result);
+
     REQUIRE( result == expected );
 
     // 15 additional cycles shouldn't change anything as the period is 15
     result = tick_grid_n_times(conways_pentadecathlon_state_11, 26);
+
+    // print_grid(conways_pentadecathlon_state_11, "conways_pentadecathlon_state_11 26");
+    // print_grid(result, "result");
+    // print_grid(expected, "expected");
+    clear_num_of_neighbours(result);
+
     REQUIRE( result == expected );
 }
 
@@ -186,6 +230,7 @@ TEST_CASE("23/3 huge grid to create a case where a tick is slow")
         conways_pentadecathlon_state_7,
         NUMBER_OF_TIMES_TO_ADD_HALO);
     Grid result = tick_grid_n_times(huge_conways_pentadecathlon_state_11, 11);
+    clear_num_of_neighbours(result);
     REQUIRE( result == huge_conways_pentadecathlon_state_7 );
 }
 

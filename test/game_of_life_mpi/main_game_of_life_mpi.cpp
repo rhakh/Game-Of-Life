@@ -24,9 +24,19 @@ void handler(int sig) {
   exit(1);
 }
 
+void print_grid(Grid &grid, std::string name) {
+    std::cout << "--- Print " << name << " grid:" << std::endl;
+    for (int y = 0; y < grid[0].size(); y++) {
+        for (int x = 0; x < grid.size(); x++) {
+            std::cout << (int)(grid[x][y] & 0x01) << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 int main(int argc, char** argv)
 {
-    signal(SIGSEGV, handler); 
+    signal(SIGSEGV, handler);
 
     MPI_Init(&argc, &argv);
     int my_rank;
@@ -79,13 +89,30 @@ int main(int argc, char** argv)
     Grid huge_conways_pentadecathlon_state_7 = add_halo_n_times(
         conways_pentadecathlon_state_7,
         NUMBER_OF_TIMES_TO_ADD_HALO);
-    Grid result = tick_grid_n_times(conways_pentadecathlon_state_11, 26);
-    Grid result_huge = tick_grid_n_times(huge_conways_pentadecathlon_state_11, 26);
+    // Grid result = tick_grid_n_times(conways_pentadecathlon_state_11, 26);
+    // Grid result_huge = tick_grid_n_times(huge_conways_pentadecathlon_state_11, 26);
 
-    if (my_rank == 0) {
-        assert( result == conways_pentadecathlon_state_7 );
-        assert( result_huge == huge_conways_pentadecathlon_state_7 );
-        cout << "results match expectations" << endl;
+    // if (my_rank == 0) {
+    //     print_grid(conways_pentadecathlon_state_11, "conways_pentadecathlon_state_11");
+    //     print_grid(result, "result");
+    //     print_grid(conways_pentadecathlon_state_7, "conways_pentadecathlon_state_7");
+    // }
+
+    {
+        Grid result = tick_grid_n_times(conways_pentadecathlon_state_11, 2);
+
+        if (my_rank == 0) {
+            print_grid(result, "result");
+        }
     }
+
+    // if (my_rank == 0) {
+    //     assert( result == conways_pentadecathlon_state_7 );
+    //     assert( result_huge == huge_conways_pentadecathlon_state_7 );
+    //     cout << "results match expectations" << endl;
+    // }
+
+    std::cout << "Finalize " << std::endl;
+
     MPI_Finalize();
 }

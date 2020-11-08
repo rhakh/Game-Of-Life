@@ -15,7 +15,8 @@ else
   INCLUDE_AND_LIBS = -I include \
 					-L /usr/lib/x86_64-linux-gnu \
 					-I /usr/include/boost
-  FLAGS = -std=c++14 -Wall -Wextra -Werror -O2 \
+					# -Werror
+  FLAGS = -std=c++14 -Wall -Wextra  -O2 \
 			-Wno-unused -Wno-unused-parameter -Wno-unused-result -Wno-unused-command-line-argument \
 			-lboost_filesystem  -lboost_system -lboost_program_options \
 			-pthread -lboost_thread
@@ -45,6 +46,20 @@ test: src/GameOfLife.cpp src/test_GameOfLife.cpp src/CLI.cpp
 
 make_dir:
 	mkdir -p $(OBJDIR)
+
+#========== MPI ==========
+mpi: obj/MPI_GameOfLife.o obj/MPI_main.o src/MPI_GameOfLife.cpp src/MPI_main.cpp
+	$(CXX) -o mpi_game_of_life obj/MPI_GameOfLife.o obj/MPI_main.o $(FLAGS)
+
+obj/MPI_GameOfLife.o: src/MPI_GameOfLife.cpp
+	$(CXX) $(INCLUDE_AND_LIBS) -o obj/MPI_GameOfLife.o -c src/MPI_GameOfLife.cpp $(FLAGS) 
+
+obj/MPI_main.o: src/MPI_main.cpp
+	$(CXX) $(INCLUDE_AND_LIBS) -o obj/MPI_main.o -c src/MPI_main.cpp $(FLAGS)
+
+mpi_clean:
+	rm -f obj/MPI_GameOfLife.o obj/MPI_main.o mpi_game_of_life
+# ==========    ==========
 
 $(OBJDIR)%.o: $(SRCDIR)%.cpp
 	$(CXX) $(FLAGS) $(INCLUDE_AND_LIBS) -o $@ -c $<

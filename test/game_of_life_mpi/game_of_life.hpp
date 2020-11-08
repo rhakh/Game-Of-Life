@@ -7,7 +7,7 @@ using namespace std;
 
 // public
 // enum CellState { dead, alive };
-typedef uint8_t CellState;
+typedef uint32_t CellState;
 enum CellState_e { dead, alive };
 typedef vector<vector<CellState>> Grid;
 void show_grid(Grid grid);
