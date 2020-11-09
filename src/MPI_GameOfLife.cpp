@@ -12,8 +12,8 @@ MPI_GameOfLife::MPI_GameOfLife(unsigned int height, unsigned int width, const st
     this->tmp_map = std::make_unique<std::vector<std::vector<uint8_t>>>(this->height);
 
     for (int i = 0; i < height; i++) {
-        (*this->map)[i].emplace_back(width);
-        (*this->tmp_map)[i].emplace_back(width);
+        (*this->map)[i] = std::vector<uint8_t>(width);
+        (*this->tmp_map)[i] = std::vector<uint8_t>(width);
     }
 
     for (int y = 0; y < height; y++) {
@@ -60,7 +60,6 @@ void MPI_GameOfLife::makeNextGeneration() {
     this->iteration++;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            int point = (y * width) + x;
 
             if ((*tmp_map)[y][x] == 0)
                 continue;
@@ -111,14 +110,14 @@ void MPI_GameOfLife::setCell(unsigned int x, unsigned int y) {
     (*map)[y][x] |= 0x1;
 
     (*map)[y - 1][x - 1] += 0x2;
-    (*map)[y - 1][x - 0] += 0x2;
+    (*map)[y - 1][x    ] += 0x2;
     (*map)[y - 1][x + 1] += 0x2;
 
-    (*map)[y - 0][x - 1] += 0x2;
-    (*map)[y - 0][x + 1] += 0x2;
+    (*map)[y    ][x - 1] += 0x2;
+    (*map)[y    ][x + 1] += 0x2;
 
     (*map)[y + 1][x - 1] += 0x2;
-    (*map)[y + 1][x - 0] += 0x2;
+    (*map)[y + 1][x    ] += 0x2;
     (*map)[y + 1][x + 1] += 0x2;
 }
 
@@ -126,14 +125,14 @@ void MPI_GameOfLife::clearCell(unsigned int x, unsigned int y) {
     (*map)[y][x] &= ~0x1;
 
     (*map)[y - 1][x - 1] -= 0x2;
-    (*map)[y - 1][x - 0] -= 0x2;
+    (*map)[y - 1][x    ] -= 0x2;
     (*map)[y - 1][x + 1] -= 0x2;
 
-    (*map)[y - 0][x - 1] -= 0x2;
-    (*map)[y - 0][x + 1] -= 0x2;
+    (*map)[y    ][x - 1] -= 0x2;
+    (*map)[y    ][x + 1] -= 0x2;
 
     (*map)[y + 1][x - 1] -= 0x2;
-    (*map)[y + 1][x - 0] -= 0x2;
+    (*map)[y + 1][x    ] -= 0x2;
     (*map)[y + 1][x + 1] -= 0x2;
 }
 
