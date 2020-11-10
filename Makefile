@@ -17,9 +17,11 @@ else
 					-I /usr/include/boost
 					# -Werror
   FLAGS = -std=c++14 -Wall -Wextra  \
-			-Wno-unused -Wno-unused-parameter -Wno-unused-result -Wno-unused-command-line-argument \
+			-Wno-unused -Wno-unused-parameter -Wno-unused-result \
 			-lboost_filesystem  -lboost_system -lboost_program_options \
 			-pthread -lboost_thread
+
+			#-Wno-unused-command-line-argument -O2
 endif
 
 
@@ -48,14 +50,14 @@ make_dir:
 	mkdir -p $(OBJDIR)
 
 #========== MPI ==========
-mpi: obj/MPI_GameOfLife.o obj/MPI_main.o src/MPI_GameOfLife.cpp src/MPI_main.cpp
-	$(CXX) -o mpi_game_of_life obj/MPI_GameOfLife.o obj/MPI_main.o $(FLAGS)
+mpi: make_dir obj/MPI_GameOfLife.o obj/MPI_main.o src/MPI_GameOfLife.cpp src/MPI_main.cpp
+	mpic++ $(INCLUDE_AND_LIBS) -o mpi_game_of_life obj/MPI_GameOfLife.o obj/MPI_main.o $(FLAGS)
 
 obj/MPI_GameOfLife.o: src/MPI_GameOfLife.cpp
-	$(CXX) $(INCLUDE_AND_LIBS) -o obj/MPI_GameOfLife.o -c src/MPI_GameOfLife.cpp $(FLAGS)
+	mpic++ $(INCLUDE_AND_LIBS) -o obj/MPI_GameOfLife.o -c src/MPI_GameOfLife.cpp $(FLAGS)
 
 obj/MPI_main.o: src/MPI_main.cpp
-	$(CXX) $(INCLUDE_AND_LIBS) -o obj/MPI_main.o -c src/MPI_main.cpp $(FLAGS)
+	mpic++ $(INCLUDE_AND_LIBS) -o obj/MPI_main.o -c src/MPI_main.cpp $(FLAGS)
 
 mpi_clean:
 	rm -f obj/MPI_GameOfLife.o obj/MPI_main.o mpi_game_of_life

@@ -31,6 +31,13 @@ public:
     void randomFillMap();
     unsigned int getIteration() const;
     std::string getDump() const;
+
+    int get_chunk_beginning(int my_rank, int total_num_proc);
+    int get_chunk_end(int my_rank, int total_num_proc);
+    void liveGeneration(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
+    void sendAndRecvLine(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
+    void liveNGeneration(int my_rank, int total_num_proc, int num_of_generations);
+
 };
 
 #endif // MPI_GAME_OF_LIFE_HPP
