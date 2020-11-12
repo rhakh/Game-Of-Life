@@ -15,13 +15,11 @@ else
   INCLUDE_AND_LIBS = -I include \
 					-L /usr/lib/x86_64-linux-gnu \
 					-I /usr/include/boost
-					# -Werror
-  FLAGS = -std=c++14 -Wall -Wextra  \
-			-Wno-unused -Wno-unused-parameter -Wno-unused-result \
+  FLAGS = -std=c++14 -Wall -Wextra -O2 \
+			-Wno-unused -Wno-unused-parameter -Wno-unused-result -Wno-unused-command-line-argument \
 			-lboost_filesystem  -lboost_system -lboost_program_options \
 			-pthread -lboost_thread
-
-			#-Wno-unused-command-line-argument -O2
+			# -Werror
 endif
 
 

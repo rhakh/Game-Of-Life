@@ -6,9 +6,10 @@
 #include "MPI_GameOfLife.hpp"
 
 int TAG = 0;  // for MPI communications
+int TAG_BORDER = 1;
 
-MPI_GameOfLife::MPI_GameOfLife(unsigned int height, unsigned int width, const std::vector<std::vector<uint8_t>> &map)
-    : height(height), width(width), iteration(0)
+MPI_GameOfLife::MPI_GameOfLife(const std::vector<std::vector<uint8_t>> &map)
+    : height(map.size()), width(map[0].size()), iteration(0)
 {
     this->map = std::make_unique<std::vector<std::vector<uint8_t>>>(this->height + 2); // 2 = halo
     this->tmp_map = std::make_unique<std::vector<std::vector<uint8_t>>>(this->height + 2); // 2 = halo
@@ -41,6 +42,7 @@ void MPI_GameOfLife::printMap() {
     std::stringstream ss;
 
     for (int y = 1; y < height + 1; y++) {
+        ss << "[" << y << "]\t";
         for (int x = 1; x < width + 1; x++) {
             if (((*map)[y][x] & 0x01) == 1)
                 ss << "*";
@@ -51,35 +53,6 @@ void MPI_GameOfLife::printMap() {
     }
 
     std::cout << ss.str();
-}
-
-void MPI_GameOfLife::makeNextGeneration() {
-    // TODO, change for memcpy
-    for (int y = 0; y < height; y++)
-        for (int x = 0; x < width; x++)
-            (*tmp_map)[y][x] = (*map)[y][x];
-
-    this->iteration++;
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-
-            if ((*tmp_map)[y][x] == 0)
-                continue;
-
-            // Get count of alive neightbour cells
-            unsigned live_cells_cnt = (*tmp_map)[y][x] >> 1;
-
-            // Is alive ?
-            if ((*tmp_map)[y][x] & 0x01) {
-                // Overpopulation or underpopulation - than die
-                if (live_cells_cnt != 2 && live_cells_cnt != 3)
-                    clearCell(x, y);
-            } else if (live_cells_cnt == 3) {
-                // Has 3 neighbours - than revive
-                setCell(x, y);
-            }
-        }
-    }
 }
 
 int MPI_GameOfLife::get_chunk_beginning(int my_rank, int total_num_proc) {
@@ -101,33 +74,55 @@ int MPI_GameOfLife::get_chunk_end(int my_rank, int total_num_proc) {
     return std::min((int)(height + 1), next_begining);
 }
 
+int inline MPI_GameOfLife::get_live_neighbours(int x, int y) {
+    int x_left, x_right, y_up, y_down;
+
+    x_left = (x == 1) ? width : x - 1;
+    x_right = (x == width) ? 1 : x + 1;
+    y_up = (y == 1) ? height : y - 1;
+    y_down = (y == height) ? 1 : y + 1;
+
+    return  (*tmp_map)[y_up  ][x_left ] + (*tmp_map)[y_up  ][x      ] +
+            (*tmp_map)[y_up  ][x_right] + (*tmp_map)[y     ][x_left ] +
+            (*tmp_map)[y     ][x_right] + (*tmp_map)[y_down][x_left ] +
+            (*tmp_map)[y_down][x      ] + (*tmp_map)[y_down][x_right];
+}
+
 void MPI_GameOfLife::liveGeneration(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc) {
     // TODO, change for memcpy
-    for (int y = chunk_beginning; y < chunk_end; y++)
+    int live_neighbours;
+
+    for (int y = 1; y < height + 1; y++) // begin from (chunk_beginning - 1) to (chunk_end + 1)
         for (int x = 1; x < width + 1; x++)
             (*tmp_map)[y][x] = (*map)[y][x];
 
     this->iteration++;
     for (int y = chunk_beginning; y < chunk_end; y++) {
         for (int x = 1; x < width + 1; x++) { // + 1 halo
+            int live_neighbours = get_live_neighbours(x, y);
 
-            if ((*tmp_map)[y][x] == 0)
-                continue;
-
-            // Get count of alive neightbour cells
-            unsigned live_cells_cnt = (*tmp_map)[y][x] >> 1;
-
-            // Is alive ?
-            if ((*tmp_map)[y][x] & 0x01) {
-                // Overpopulation or underpopulation - than die
-                if (live_cells_cnt != 2 && live_cells_cnt != 3)
+            if ((*tmp_map)[y][x] == 1) {
+                if (live_neighbours != 2 && live_neighbours != 3)
                     clearCell(x, y);
-            } else if (live_cells_cnt == 3) {
-                // Has 3 neighbours - than revive
+            } else if (live_neighbours == 3) {
                 setCell(x, y);
             }
         }
     }
+}
+
+std::string get_line(std::vector<uint8_t> &line, int length) {
+    std::stringstream ss;
+
+    for (int i = 0; i < length; i++) {
+        // if (((*map)[y][x] & 0x01) == 1)
+        //     ss << "*";
+        // else
+        //     ss << ".";
+        ss << (int)line[i] << " ";
+    }
+
+    return ss.str();
 }
 
 void MPI_GameOfLife::sendAndRecvLine(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc) {
@@ -152,15 +147,44 @@ void MPI_GameOfLife::sendAndRecvLine(int chunk_beginning, int chunk_end, int my_
     if(there_is_chunk_at_bottom) {
         // Send my side of the bottom border to dest. (1 to skip halo)
         int dest = my_rank + 1;  // next process
-        int my_last_column = chunk_end - 1;
-        MPI_Send(&(*map)[my_last_column][1], width, MPI_UNSIGNED_CHAR, dest, TAG,
+        int my_last_line = chunk_end - 1;
+        MPI_Send(&(*map)[my_last_line][1], width, MPI_UNSIGNED_CHAR, dest, TAG,
                  MPI_COMM_WORLD);
 
         // Receive from src other side of the bottom border,
         // save to other_side_border. (1 to skip halo)
         int src = my_rank + 1;  // next process
-        int other_side_border = my_last_column + 1;
+        int other_side_border = my_last_line + 1;
         MPI_Recv(&(*map)[other_side_border][1], width, MPI_UNSIGNED_CHAR, src, TAG,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+}
+
+void MPI_GameOfLife::sendAndRecvLineForBorders(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc) {
+    // Only for 0 and total_num_proc - 1 ranks
+    if(my_rank == 0) {
+        // Receive from last proc, bottom border,
+        // save to [height] line. (1 to skip halo)
+        int src = total_num_proc - 1;  // last process
+        MPI_Recv(&(*map)[height][1], width, MPI_UNSIGNED_CHAR, src, TAG_BORDER,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        // Send top border to last proc. (1 to skip halo)
+        int dest = total_num_proc - 1; // last process
+        MPI_Send(&(*map)[1][1], width, MPI_UNSIGNED_CHAR, dest, TAG_BORDER,
+                 MPI_COMM_WORLD);
+    }
+
+    if (my_rank == total_num_proc - 1) {
+        // Send bottom border to first proc. (1 to skip halo)
+        int dest = 0;  // first process
+        MPI_Send(&(*map)[height][1], width, MPI_UNSIGNED_CHAR, dest, TAG_BORDER,
+                 MPI_COMM_WORLD);
+
+        // Receive from first proc, top border,
+        // save to [1] line. (1 to skip halo)
+        int src = 0;  // next process
+        MPI_Recv(&(*map)[1][1], width, MPI_UNSIGNED_CHAR, src, TAG_BORDER,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 }
@@ -171,7 +195,10 @@ void MPI_GameOfLife::liveNGeneration(int my_rank, int total_num_proc, int num_of
 
     for (int i = 0; i < num_of_generations; ++i) {
         liveGeneration(chunk_beginning, chunk_end, my_rank, total_num_proc);
-        sendAndRecvLine(chunk_beginning, chunk_end, my_rank, total_num_proc);
+        if (total_num_proc > 1) {
+            sendAndRecvLine(chunk_beginning, chunk_end, my_rank, total_num_proc);
+            sendAndRecvLineForBorders(chunk_beginning, chunk_end, my_rank, total_num_proc);
+        }
     }
 
     if (my_rank == 0) {
@@ -198,69 +225,38 @@ void MPI_GameOfLife::liveNGeneration(int my_rank, int total_num_proc, int num_of
 }
 
 void MPI_GameOfLife::randomFillMap() {
-    unsigned int x, y, seed;
-    int half_len;
+    // TODO
+    // unsigned int x, y, seed;
+    // int half_len;
 
-	// Get seed; random if 0
-	seed = (unsigned)time(NULL);
+	// // Get seed; random if 0
+	// seed = (unsigned)time(NULL);
 
-	// Randomly initialise cell map with ~50% on pixels
-	std::cout << "Initializing" << std::endl;
+	// // Randomly initialise cell map with ~50% on pixels
+	// std::cout << "Initializing" << std::endl;
 
-	srand(seed);
+	// srand(seed);
 
-	half_len = width * height;
-    while (half_len > 0)
-    {
-        x = rand() % (width - 1);
-		y = rand() % (height - 1);
+	// half_len = width * height;
+    // while (half_len > 0)
+    // {
+    //     x = rand() % (width - 1);
+	// 	y = rand() % (height - 1);
 
-        if (((*map)[y][x] & 0x01) == 0) {
-            setCell(x, y);
-        }
+    //     if (((*map)[y][x] & 0x01) == 0) {
+    //         setCell(x, y);
+    //     }
         
-        half_len--;
-    }
+    //     half_len--;
+    // }
 }
 
-void MPI_GameOfLife::setCell(unsigned int x, unsigned int y) {
-    int x_left, x_right;
-
-    x_left = (x == 1) ? width : x - 1;
-    x_right = (x == width) ? 1 : x + 1;
-
-    (*map)[y][x] |= 0x1;
-
-    (*map)[y - 1][x_left ] += 0x2;
-    (*map)[y - 1][x      ] += 0x2;
-    (*map)[y - 1][x_right] += 0x2;
-
-    (*map)[y    ][x_left ] += 0x2;
-    (*map)[y    ][x_right] += 0x2;
-
-    (*map)[y + 1][x_left ] += 0x2;
-    (*map)[y + 1][x      ] += 0x2;
-    (*map)[y + 1][x_right] += 0x2;
+void inline MPI_GameOfLife::setCell(unsigned int x, unsigned int y) {
+    (*map)[y][x] = 1;
 }
 
-void MPI_GameOfLife::clearCell(unsigned int x, unsigned int y) {
-    int x_left, x_right;
-
-    x_left = (x == 1) ? width : x - 1;
-    x_right = (x == width) ? 1 : x + 1;
-
-    (*map)[y][x] &= ~0x1;
-
-    (*map)[y - 1][x_left ] -= 0x2;
-    (*map)[y - 1][x      ] -= 0x2;
-    (*map)[y - 1][x_right] -= 0x2;
-
-    (*map)[y    ][x_left ] -= 0x2;
-    (*map)[y    ][x_right] -= 0x2;
-
-    (*map)[y + 1][x_left ] -= 0x2;
-    (*map)[y + 1][x      ] -= 0x2;
-    (*map)[y + 1][x_right] -= 0x2;
+void inline MPI_GameOfLife::clearCell(unsigned int x, unsigned int y) {
+    (*map)[y][x] = 0;
 }
 
 unsigned int MPI_GameOfLife::getIteration() const {
@@ -270,8 +266,8 @@ unsigned int MPI_GameOfLife::getIteration() const {
 std::string MPI_GameOfLife::getDump() const {
     std::stringstream ss;
 
-    for (unsigned int y = 1; y < height + 1; y++) {
-        for (unsigned int x = 1; x < width + 1; x++) {
+    for (int y = 1; y < height + 1; y++) {
+        for (int x = 1; x < width + 1; x++) {
             if ((*map)[y][x] & 0x01)
                 ss << "*";
             else
