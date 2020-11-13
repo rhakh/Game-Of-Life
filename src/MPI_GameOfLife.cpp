@@ -15,14 +15,14 @@ MPI_GameOfLife::MPI_GameOfLife(const std::vector<std::vector<uint8_t>> &map)
     this->tmp_map = std::make_unique<std::vector<std::vector<uint8_t>>>(this->height + 2); // 2 = halo
 
     for (int i = 0; i < height + 2; i++) {
-        (*this->map)[i] = std::vector<uint8_t>(width + 2); // 2 = halo
-        (*this->tmp_map)[i] = std::vector<uint8_t>(width + 2); // 2 = halo
+        (*this->map)[i] = std::vector<uint8_t>(width);
+        (*this->tmp_map)[i] = std::vector<uint8_t>(width);
     }
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             if (map[y][x] == 1)
-                setCell(x + 1, y + 1); // exclude halo
+                setCell(x, y + 1); // exclude halo
         }
     }
 }
@@ -43,7 +43,7 @@ void MPI_GameOfLife::printMap() {
 
     for (int y = 1; y < height + 1; y++) {
         ss << "[" << y << "]\t";
-        for (int x = 1; x < width + 1; x++) {
+        for (int x = 0; x < width; x++) {
             if (((*map)[y][x] & 0x01) == 1)
                 ss << "*";
             else
@@ -77,10 +77,10 @@ int MPI_GameOfLife::get_chunk_end(int my_rank, int total_num_proc) {
 int inline MPI_GameOfLife::get_live_neighbours(int x, int y) {
     int x_left, x_right, y_up, y_down;
 
-    x_left = (x == 1) ? width : x - 1;
-    x_right = (x == width) ? 1 : x + 1;
-    y_up = (y == 1) ? height : y - 1;
-    y_down = (y == height) ? 1 : y + 1;
+    x_left = (x == 0) ? width - 1 : x - 1;
+    x_right = (x == width - 1) ? 0 : x + 1;
+    y_up = y - 1;
+    y_down = y + 1;
 
     return  (*tmp_map)[y_up  ][x_left ] + (*tmp_map)[y_up  ][x      ] +
             (*tmp_map)[y_up  ][x_right] + (*tmp_map)[y     ][x_left ] +
@@ -92,13 +92,14 @@ void MPI_GameOfLife::liveGeneration(int chunk_beginning, int chunk_end, int my_r
     // TODO, change for memcpy
     int live_neighbours;
 
-    for (int y = 1; y < height + 1; y++) // begin from (chunk_beginning - 1) to (chunk_end + 1)
-        for (int x = 1; x < width + 1; x++)
+    // copy chunk
+    for (int y = (chunk_beginning - 1); y < (chunk_end + 1); y++)
+        for (int x = 0; x < width; x++)
             (*tmp_map)[y][x] = (*map)[y][x];
 
     this->iteration++;
     for (int y = chunk_beginning; y < chunk_end; y++) {
-        for (int x = 1; x < width + 1; x++) { // + 1 halo
+        for (int x = 0; x < width; x++) {
             int live_neighbours = get_live_neighbours(x, y);
 
             if ((*tmp_map)[y][x] == 1) {
@@ -132,13 +133,13 @@ void MPI_GameOfLife::sendAndRecvLine(int chunk_beginning, int chunk_end, int my_
         // save to other_side_border. (1 to skip halo)
         int src = my_rank - 1;  // prev process
         int other_side_border = chunk_beginning - 1;
-        MPI_Recv(&(*map)[other_side_border][1], width, MPI_UNSIGNED_CHAR, src, TAG,
+        MPI_Recv(&(*map)[other_side_border][0], width, MPI_UNSIGNED_CHAR, src, TAG,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         // Send my side of the top border to dest. (1 to skip halo)
         int dest = my_rank - 1; // previous process
         int my_first_line = chunk_beginning;
-        MPI_Send(&(*map)[my_first_line][1], width, MPI_UNSIGNED_CHAR, dest, TAG,
+        MPI_Send(&(*map)[my_first_line][0], width, MPI_UNSIGNED_CHAR, dest, TAG,
                  MPI_COMM_WORLD);
     }
 
@@ -148,14 +149,14 @@ void MPI_GameOfLife::sendAndRecvLine(int chunk_beginning, int chunk_end, int my_
         // Send my side of the bottom border to dest. (1 to skip halo)
         int dest = my_rank + 1;  // next process
         int my_last_line = chunk_end - 1;
-        MPI_Send(&(*map)[my_last_line][1], width, MPI_UNSIGNED_CHAR, dest, TAG,
+        MPI_Send(&(*map)[my_last_line][0], width, MPI_UNSIGNED_CHAR, dest, TAG,
                  MPI_COMM_WORLD);
 
         // Receive from src other side of the bottom border,
         // save to other_side_border. (1 to skip halo)
         int src = my_rank + 1;  // next process
         int other_side_border = my_last_line + 1;
-        MPI_Recv(&(*map)[other_side_border][1], width, MPI_UNSIGNED_CHAR, src, TAG,
+        MPI_Recv(&(*map)[other_side_border][0], width, MPI_UNSIGNED_CHAR, src, TAG,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 }
@@ -164,27 +165,27 @@ void MPI_GameOfLife::sendAndRecvLineForBorders(int chunk_beginning, int chunk_en
     // Only for 0 and total_num_proc - 1 ranks
     if(my_rank == 0) {
         // Receive from last proc, bottom border,
-        // save to [height] line. (1 to skip halo)
+        // save to [height] line. (chunk_beginning - 1 to recv in halo line)
         int src = total_num_proc - 1;  // last process
-        MPI_Recv(&(*map)[height][1], width, MPI_UNSIGNED_CHAR, src, TAG_BORDER,
+        MPI_Recv(&(*map)[chunk_beginning - 1][0], width, MPI_UNSIGNED_CHAR, src, TAG_BORDER,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        // Send top border to last proc. (1 to skip halo)
+        // Send top border to last proc.
         int dest = total_num_proc - 1; // last process
-        MPI_Send(&(*map)[1][1], width, MPI_UNSIGNED_CHAR, dest, TAG_BORDER,
+        MPI_Send(&(*map)[chunk_beginning][0], width, MPI_UNSIGNED_CHAR, dest, TAG_BORDER,
                  MPI_COMM_WORLD);
     }
 
     if (my_rank == total_num_proc - 1) {
-        // Send bottom border to first proc. (1 to skip halo)
+        // Send bottom border to first proc.
         int dest = 0;  // first process
-        MPI_Send(&(*map)[height][1], width, MPI_UNSIGNED_CHAR, dest, TAG_BORDER,
+        MPI_Send(&(*map)[chunk_end - 1][0], width, MPI_UNSIGNED_CHAR, dest, TAG_BORDER,
                  MPI_COMM_WORLD);
 
         // Receive from first proc, top border,
-        // save to [1] line. (1 to skip halo)
+        // save to [1] line. (chunk_end to recv in halo line)
         int src = 0;  // next process
-        MPI_Recv(&(*map)[1][1], width, MPI_UNSIGNED_CHAR, src, TAG_BORDER,
+        MPI_Recv(&(*map)[chunk_end][0], width, MPI_UNSIGNED_CHAR, src, TAG_BORDER,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 }
@@ -207,7 +208,7 @@ void MPI_GameOfLife::liveNGeneration(int my_rank, int total_num_proc, int num_of
             int chunk_beginning = get_chunk_beginning(src, total_num_proc);
             int chunk_end = get_chunk_end(src, total_num_proc);
             for(int y = chunk_beginning; y < chunk_end; y++) {
-                MPI_Recv(&(*map)[y][1], width, MPI_UNSIGNED_SHORT, src, TAG,
+                MPI_Recv(&(*map)[y][0], width, MPI_UNSIGNED_SHORT, src, TAG,
                          MPI_COMM_WORLD,MPI_STATUS_IGNORE);
             }
         }
@@ -218,7 +219,7 @@ void MPI_GameOfLife::liveNGeneration(int my_rank, int total_num_proc, int num_of
         int dest = 0;
         for(int y = chunk_beginning; y < chunk_end; y++) {
             // 1 to skip halo
-            MPI_Send(&(*map)[y][1], width, MPI_UNSIGNED_SHORT, dest, TAG,
+            MPI_Send(&(*map)[y][0], width, MPI_UNSIGNED_SHORT, dest, TAG,
                      MPI_COMM_WORLD);
         }
     }
@@ -267,7 +268,7 @@ std::string MPI_GameOfLife::getDump() const {
     std::stringstream ss;
 
     for (int y = 1; y < height + 1; y++) {
-        for (int x = 1; x < width + 1; x++) {
+        for (int x = 0; x < width; x++) {
             if ((*map)[y][x] & 0x01)
                 ss << "*";
             else
