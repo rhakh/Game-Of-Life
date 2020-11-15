@@ -2,7 +2,7 @@ NAME = game_of_life
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
-  CXX=clang++
+  CXX=mpic++
   INCLUDE_AND_LIBS = -I include \
 					-I /usr/local/Cellar/boost/1.72.0_3/include \
 					-L /usr/local/Cellar/boost/1.72.0_3/lib

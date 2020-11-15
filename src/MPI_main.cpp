@@ -98,27 +98,12 @@ int main(int argc, char **argv) {
     int my_rank, total_num_proc;
 
     signal(SIGSEGV, handler);
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &total_num_proc);
-    // MPI_GameOfLife  game(default_map);
     MPI_GameOfLife  game(hard_map);
 
-    // if (my_rank == 0) {
-    //     std::cout << "Start:" << std::endl;
-    //     game.printMap();
-    // }
+    game.makeNGeneration(argc, argv, 1500);
 
-    double start_time = MPI_Wtime();
-    game.liveNGeneration(my_rank, total_num_proc, 1500);
-    double end_time = MPI_Wtime();
+    std::cout << "Finish:" << std::endl;
+    game.printMap();
 
-    if (my_rank == 0) {
-        std::cout << "Spend " << (end_time - start_time) * 1000 << " ms" << std::endl;
-        std::cout << "Finish:" << std::endl;
-        game.printMap();
-    }
-
-    MPI_Finalize();
     return (0);
 }

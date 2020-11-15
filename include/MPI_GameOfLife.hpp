@@ -9,11 +9,12 @@
 
 class MPI_GameOfLife
 {
-    typedef std::unique_ptr<std::vector<std::vector<uint8_t>>> map_ptr;
+    typedef std::vector<std::vector<uint8_t>> Map;
+    typedef std::unique_ptr<std::vector<std::vector<uint8_t>>> Map_ptr;
 
 private:
-    map_ptr map;
-    map_ptr tmp_map;
+    Map_ptr map;
+    Map_ptr tmp_map;
     int height;
     int width;
     unsigned int iteration;
@@ -38,6 +39,7 @@ public:
     void sendAndRecvLine(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
     void sendAndRecvLineForBorders(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
     void liveNGeneration(int my_rank, int total_num_proc, int num_of_generations);
+    void makeNGeneration(int argc, char **argv, int num_of_generations);
 
 };
 

@@ -223,6 +223,27 @@ void MPI_GameOfLife::liveNGeneration(int my_rank, int total_num_proc, int num_of
                      MPI_COMM_WORLD);
         }
     }
+
+    // Remove halo lines from map
+    // (*map).erase((*map).begin() + 0);
+    // (*map).pop_back();
+}
+
+void MPI_GameOfLife::makeNGeneration(int argc, char **argv, int num_of_generations) {
+    int my_rank, total_num_proc;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &total_num_proc);
+
+    double start_time = MPI_Wtime();
+    liveNGeneration(my_rank, total_num_proc, num_of_generations);
+    double end_time = MPI_Wtime();
+
+    if (my_rank == 0)
+        std::cout << "Spend " << (end_time - start_time) * 1000 << " ms" << std::endl;
+
+    MPI_Finalize();
 }
 
 void MPI_GameOfLife::randomFillMap() {
