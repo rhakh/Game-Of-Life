@@ -6,41 +6,38 @@
 #include <vector>
 #include <memory>
 #include <time.h>
+#include "AGameOfLife.hpp"
 
-class MPI_GameOfLife
-{
-    typedef std::vector<std::vector<uint8_t>> Map;
-    typedef std::unique_ptr<std::vector<std::vector<uint8_t>>> Map_ptr;
-
+class MPI_GameOfLife : public AGameOfLife {
 private:
-    Map_ptr map;
-    Map_ptr tmp_map;
+    Map_ptr mMap;
+    Map_ptr mTmp_map;
     int height;
     int width;
-    unsigned int iteration;
-    void inline setCell(unsigned int x, unsigned int y);
-    void inline clearCell(unsigned int x, unsigned int y);
+    int iteration;
+
+    int getChunkBeginning(int my_rank, int total_num_proc);
+    int getChunkEnd(int my_rank, int total_num_proc);
+    void liveOneGeneration(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
+    void sendAndRecvLine(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
+    void sendAndRecvLineForBorders(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
+    void _liveNGeneration(int my_rank, int total_num_proc, int num_of_generations, GOF_verbose_lvl verbose);
+
+    void setCell(int x, int y);
+    void clearCell(int x, int y);
+    int getLiveNeighbours(int x, int y);
+    void randomFillMap();
+    void printMap();
 
 public:
     // TODO: move, copy constructors
-    MPI_GameOfLife(unsigned int height, unsigned int width);
-    MPI_GameOfLife(const std::vector<std::vector<uint8_t>> &map);
+    MPI_GameOfLife(int height, int width);
+    MPI_GameOfLife(const Map &map);
     ~MPI_GameOfLife();
 
-    void printMap();
-    void randomFillMap();
-    unsigned int getIteration() const;
-    std::string getDump() const;
-
-    int get_chunk_beginning(int my_rank, int total_num_proc);
-    int get_chunk_end(int my_rank, int total_num_proc);
-    int inline get_live_neighbours(int x, int y);
-    void liveGeneration(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
-    void sendAndRecvLine(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
-    void sendAndRecvLineForBorders(int chunk_beginning, int chunk_end, int my_rank, int total_num_proc);
-    void liveNGeneration(int my_rank, int total_num_proc, int num_of_generations);
-    void makeNGeneration(int argc, char **argv, int num_of_generations);
-
+    Map_ptr liveNGeneration(int argc, char **argv,
+                                    int num_of_generations,
+                                    GOF_verbose_lvl verbose);
 };
 
 #endif // MPI_GAME_OF_LIFE_HPP

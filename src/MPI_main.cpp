@@ -100,10 +100,7 @@ int main(int argc, char **argv) {
     signal(SIGSEGV, handler);
     MPI_GameOfLife  game(hard_map);
 
-    game.makeNGeneration(argc, argv, 1500);
-
-    std::cout << "Finish:" << std::endl;
-    game.printMap();
+    auto ret = game.liveNGeneration(argc, argv, 1500, LAST_GENERATION);
 
     return (0);
 }
