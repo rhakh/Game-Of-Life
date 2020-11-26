@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include "AGameOfLife.hpp"
 
 namespace po = boost::program_options;
 
@@ -13,7 +14,7 @@ class CLI {
     po::variables_map       vm;
 
     std::string             fileName;
-    std::vector<uint8_t>    map;
+    Map                     map;
     unsigned int            height, width, dump;
 
     bool    processArguments(int argc, const char **argv);
@@ -29,7 +30,7 @@ public:
 
     unsigned int getHeight() const;
     unsigned int getWidth() const;
-    const std::vector<uint8_t> &getMap() const;
+    const Map &getMap() const;
 
     class   CLI_invalidArguments : public std::exception {
     public:

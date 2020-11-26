@@ -71,9 +71,11 @@ CLI::CLI(int argc, const char **argv) : desc("Options") {
 	this->desc.add_options()
 			("help,h", "Print help")
 			("file,f", po::value<std::string>(), "Filename of loaded map")
-            ("concurrent,c", "Use concurrent algorithm for making generation")
-            ("dump,d", po::value<std::string>(), "Dump map at specific iteration")
-            ("verbose,v", "Print to terminal map on each generation");
+            ("num,n", po::value<std::string>(), "Number of generations to live (1500 by default)")
+            ("verbose,v", po::value<std::string>(), "Verbosity level:\n"
+                                                    "\t0 - without prints (default)\n"
+                                                    "\t1 - print map on each generation\n"
+                                                    "\t2 - print only last generation");
 
 	if (!processArguments(argc, argv))
 		throw CLI_invalidArguments();
@@ -123,16 +125,22 @@ void	CLI::parseFile() {
                     );
     if (!ok)
         throw CLI_InvalidFile();
-    this->map.reserve(height * width);
-    
+
+    this->map.resize(height);
+    for (auto &line : this->map)
+        line.resize(width);
+
     // parse cells
+    int y = 0;
     while (std::getline(file, line)) {
         if (std::regex_match(line, cell)) {
-            for (unsigned int i = 0; i < line.length(); i++)
-                line[i] == '.' ? map.push_back(0) : map.push_back(1);
+            for (unsigned x = 0; x < line.length(); x++) {
+                line[x] == '.' ? map[y][x] = 0 : map[y][x] = 1;
+            }
         } else {
             throw CLI_InvalidMap();
         }
+        y++;
     }
 }
 
@@ -148,6 +156,6 @@ unsigned int CLI::getWidth() const {
     return width;
 }
 
-const std::vector<uint8_t> &CLI::getMap() const {
+const Map &CLI::getMap() const {
     return map;
 }

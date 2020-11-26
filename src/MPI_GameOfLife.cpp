@@ -42,7 +42,7 @@ void MPI_GameOfLife::printMap() {
 
     ss << "Generation number = " << iteration << std::endl;
     for (int y = 1; y < height + 1; y++) {
-        ss << "[" << y << "]\t";
+        ss << "[" << (y - 1) << "]\t";
         for (int x = 0; x < width; x++) {
             if (((*mMap)[y][x] & 0x01) == 1)
                 ss << "*";
@@ -252,7 +252,7 @@ Map_ptr MPI_GameOfLife::liveNGeneration(int argc,
             for (int x = 0; x < width; x++)
                 (*ret)[y][x] = (*mMap)[y + 1][x];
 
-        return std::move(ret);
+        return ret;
     }
 
     return nullptr;

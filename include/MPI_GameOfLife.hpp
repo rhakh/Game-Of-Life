@@ -1,6 +1,8 @@
 #ifndef MPI_GAME_OF_LIFE_HPP
 #define MPI_GAME_OF_LIFE_HPP
 
+// MPI implementation of Game Of Life
+
 #include <iostream>
 #include <stdint.h>
 #include <vector>

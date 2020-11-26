@@ -1,4 +1,6 @@
-NAME = game_of_life
+SERIAL_EXE = game_of_life_serial
+CONCURRENT_EXE = game_of_life_concurrent
+MPI_EXE = game_of_life_mpi
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
@@ -11,7 +13,7 @@ ifeq ($(OS),Darwin)
 			-lboost_filesystem  -lboost_system  -lboost_program_options \
 			-pthread -lboost_thread-mt
 else
-  CXX=g++
+  CXX=mpic++
   INCLUDE_AND_LIBS = -I include \
 					-L /usr/lib/x86_64-linux-gnu \
 					-I /usr/include/boost
@@ -19,7 +21,7 @@ else
 			-Wno-unused -Wno-unused-parameter -Wno-unused-result -Wno-unused-command-line-argument \
 			-lboost_filesystem  -lboost_system -lboost_program_options \
 			-pthread -lboost_thread
-			# -Werror
+			# -Werror TODO
 endif
 
 
@@ -28,15 +30,24 @@ OBJDIR = obj/
 SRCDIR = src/
 
 _SRC = 	main.cpp \
-		GameOfLife.cpp \
+		S_GameOfLife.cpp \
+		C_GameOfLife.cpp \
+		MPI_GameOfLife.cpp \
 		CLI.cpp \
 
 SRC = $(addprefix $(SRCDIR), $(_SRC))
 
 OBJ = $(addprefix $(OBJDIR),$(_SRC:.cpp=.o))
 
-all: make_dir $(NAME)
+all: make_dir $(SERIAL_EXE) $(CONCURRENT_EXE) $(MPI_EXE)
 
+serial: make_dir $(SERIAL_EXE)
+
+concurrent: make_dir $(CONCURRENT_EXE)
+
+mpi: make_dir $(MPI_EXE)
+
+# TODO
 test: src/GameOfLife.cpp src/test_GameOfLife.cpp src/CLI.cpp
 	$(CXX) $(INCLUDE_AND_LIBS) -o test_game_of_life \
 		src/GameOfLife.cpp \
@@ -47,30 +58,25 @@ test: src/GameOfLife.cpp src/test_GameOfLife.cpp src/CLI.cpp
 make_dir:
 	mkdir -p $(OBJDIR)
 
-#========== MPI ==========
-mpi: make_dir obj/MPI_GameOfLife.o obj/MPI_main.o src/MPI_GameOfLife.cpp src/MPI_main.cpp
-	mpic++ $(INCLUDE_AND_LIBS) -o mpi_game_of_life obj/MPI_GameOfLife.o obj/MPI_main.o $(FLAGS)
-
-obj/MPI_GameOfLife.o: src/MPI_GameOfLife.cpp
-	mpic++ $(INCLUDE_AND_LIBS) -o obj/MPI_GameOfLife.o -c src/MPI_GameOfLife.cpp $(FLAGS)
-
-obj/MPI_main.o: src/MPI_main.cpp
-	mpic++ $(INCLUDE_AND_LIBS) -o obj/MPI_main.o -c src/MPI_main.cpp $(FLAGS)
-
-mpi_clean:
-	rm -f obj/MPI_GameOfLife.o obj/MPI_main.o mpi_game_of_life
-# ==========    ==========
-
 $(OBJDIR)%.o: $(SRCDIR)%.cpp
 	$(CXX) $(FLAGS) $(INCLUDE_AND_LIBS) -o $@ -c $<
 
-$(NAME): $(OBJ) $(SRC)
-	$(CXX) $(INCLUDE_AND_LIBS) -o $(NAME) $(OBJ) $(FLAGS)
+$(SERIAL_EXE): $(OBJ) $(SRC)
+	$(CXX) $(INCLUDE_AND_LIBS) -DSERIAL_GOF=1 -DCONCURRENT_GOF=0 -DMPI_GOF=0 -o obj/main.o -c src/main.cpp
+	$(CXX) $(INCLUDE_AND_LIBS) -o $(SERIAL_EXE) $(OBJ) $(FLAGS)
+
+$(CONCURRENT_EXE): $(OBJ) $(SRC)
+	$(CXX) $(INCLUDE_AND_LIBS) -DSERIAL_GOF=0 -DCONCURRENT_GOF=1 -DMPI_GOF=0 -o obj/main.o -c src/main.cpp
+	$(CXX) $(INCLUDE_AND_LIBS) -o $(CONCURRENT_EXE) $(OBJ) $(FLAGS)
+
+$(MPI_EXE): $(OBJ) $(SRC)
+	$(CXX) $(INCLUDE_AND_LIBS) -DSERIAL_GOF=0 -DCONCURRENT_GOF=0 -DMPI_GOF=1 -o obj/main.o -c src/main.cpp
+	$(CXX) $(INCLUDE_AND_LIBS) -o $(MPI_EXE) $(OBJ) $(FLAGS)
 
 clean:
 	rm -rf $(OBJDIR)
 
 fclean: clean
-	rm -rf $(NAME)
+	rm -rf $(SERIAL_EXE) $(CONCURRENT_EXE) $(MPI_EXE)
 
 re: fclean all
