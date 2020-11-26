@@ -1,27 +1,36 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstdlib>
-#include "GameOfLife.hpp"
 #include "CLI.hpp"
+#include "AGameOfLife.hpp"
+
+#if SERIAL_GOF
+    #include "S_GameOfLife.hpp"
+#elif CONCURRENT_GOF
+    #include "C_GameOfLife.hpp"
+#elif MPI_GOF
+    #include "MPI_GameOfLife.hpp"
+#endif
 
 // TODO: remove this when move constructor will be done
 void randomGame(CLI &cli) {
-    GameOfLife game(cli.getHeight(), cli.getWidth());
+    // TODO
+    // GameOfLife game(cli.getHeight(), cli.getWidth());
 
-    for (int i = 0; i < 100000; i++) {
-        std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
-        game.printMap();
-        game.makeNextGeneration();
-        usleep(250000);
-        std::system("clear");
-    }
+    // for (int i = 0; i < 100000; i++) {
+    //     std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
+    //     game.printMap();
+    //     game.makeNextGeneration();
+    //     usleep(250000);
+    //     std::system("clear");
+    // }
 }
 
-int main(int argc, const char **argv) {
-    CLI cli(argc, argv);
-    std::string dump_s;
-    unsigned int dump = 0;
-    bool verbose = false, concurrent = false;
+int main(int argc, char **argv) {
+    CLI cli(argc, (const char **)argv);
+    std::string num_s, ver_s;
+    int num_of_generations = 1500;
+    auto verbose = NO_PRINTS;
 
     if (cli.isFlagSet("help"))
         return (0);
@@ -31,35 +40,22 @@ int main(int argc, const char **argv) {
         return (0);
     }
 
-    if (cli.isFlagSet("verbose"))
-        verbose = true;
+    if (cli.getFlag("verbose", ver_s))
+        verbose = (GOF_verbose_lvl) std::atoi(ver_s.c_str());
 
-    if (cli.isFlagSet("concurrent"))
-        concurrent = true;
+    if (cli.getFlag("num", num_s))
+        num_of_generations = std::atoi(num_s.c_str());
 
-    if (cli.getFlag("dump", dump_s))
-        dump = std::atoi(dump_s.c_str());
-
-    GameOfLife game(cli.getHeight(), cli.getWidth(), cli.getMap());
-
-    for (unsigned int i = 0; i < 1500; i++) {
-        if (verbose) {
-            std::cout << "Generation: " << game.getIteration() << " iteration" << std::endl;
-            game.printMap();
-            usleep(25000);
-            std::system("clear");
-        }
-
-        if (dump && dump == i) {
-            std::cout << "Dump generation " << game.getIteration() << std::endl;
-            std::cout << game.getDump() << std::endl;
-        }
-
-        if (concurrent)
-            game.makeNextGenerationConcurrent();
-        else
-            game.makeNextGeneration();
-    }
+#if SERIAL_GOF
+    S_GameOfLife game(cli.getMap());
+    game.liveNGeneration(argc, argv, num_of_generations, verbose);
+#elif CONCURRENT_GOF
+    C_GameOfLife game(cli.getMap());
+    game.liveNGeneration(argc, argv, num_of_generations, verbose);
+#elif MPI_GOF
+    MPI_GameOfLife game(cli.getMap());
+    game.liveNGeneration(argc, argv, num_of_generations, verbose);
+#endif
 
     return (0);
 }
