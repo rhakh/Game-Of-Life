@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
+#include "GameOfLifeModel.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -10,7 +11,11 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
+    // set style
     QQuickStyle::setStyle("Material");
+
+    // register model for qml
+    qmlRegisterType<GameOfLifeModel>("GOL", 1, 0, "GameOfLifeModel");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));

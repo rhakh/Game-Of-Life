@@ -3,7 +3,8 @@ import QtQuick 2.12
 import QtQuick.Window 2.3
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
-// import GameOfLifeModel 1.0
+import QtQuick.Dialogs 1.2
+import GOL 1.0
 
 ApplicationWindow {
     id: root
@@ -16,9 +17,28 @@ ApplicationWindow {
     color: "#09102B"
     title: qsTr("Game of Life")
 
+    FileDialog {
+        id: fileDialog
+        title: "Please choose a file"
+        folder: ""
+        selectMultiple: false
+        width: root.width
+        height: root.height
+        onAccepted: {
+            console.log("You chose: " + fileDialog.fileUrls)
+            gameOfLifeModel.loadFile(fileDialog.fileUrl.toString()) // TODO: check result
+            generation.text = qsTr("Generation: 0")
+            tableView.forceLayout()
+        }
+        onRejected: {
+            console.log("Canceled")
+        }
+    }
+
     TableView {
         id: tableView
         anchors.fill: parent
+        anchors.centerIn: parent
 
         rowSpacing: 1
         columnSpacing: 1
@@ -28,13 +48,39 @@ ApplicationWindow {
 
         delegate: Rectangle {
             id: cell
-            implicitWidth: 15
-            implicitHeight: 15
+            implicitWidth: 8
+            implicitHeight: 8
 
             required property var model
-            required property bool value
+            required property int value
 
-            color: value ? "white" : "black"
+            // two color
+            // color: value & 0x01 ? "#6200EE" : "#EFE5FD"
+
+            // multi color
+            color: {
+                // console.log("value = " + value.toString() + ", 0x01 = " + (value & 0xfe).toString() + ", >> 1 = " + ((value & 0x01) >> 1).toString())
+                if (value & 0x01) {
+                    switch ((value & 0xfe) >> 1) {
+                    case 1:
+                        return "#fc1e0f" // red
+                    case 2:
+                        return "#FFFF00" // yellow
+                    case 3:
+                        return "#76FF03" // green
+                    case 4:
+                        return "#00E5FF" // blue
+                    case 5:
+                        return "#E040FB" // purp
+                    case 6:
+                    case 7:
+                    case 8:
+                        return "#1DE9B6" // ocean
+                    }
+                } else {
+                    return "#E3F2FD"
+                }
+            }
 
             MouseArea {
                 anchors.fill: parent
@@ -42,9 +88,9 @@ ApplicationWindow {
             }
         }
 
-//        model: GameOfLifeModel {
-//            id: gameOfLifeModel
-//        }
+        model: GameOfLifeModel {
+            id: gameOfLifeModel
+        }
 
         // scroll
         contentX: (contentWidth - width) / 2;
@@ -66,6 +112,9 @@ ApplicationWindow {
                 text: qsTr("Load")
                 Layout.leftMargin: 10
                 Layout.alignment: Qt.AlignLeft
+                onClicked: {
+                    fileDialog.open()
+                }
             }
 
             Button {
@@ -77,19 +126,36 @@ ApplicationWindow {
                 id: slider
                 from: 0
                 to: 1
-                value: 0.25
+                value: 0.05
                 implicitWidth: 100
                 Layout.alignment: Qt.AlignLeft
             }
 
             Button {
+                text: qsTr("Next Step")
+                Layout.alignment: Qt.AlignLeft
+                enabled: !playButton.isRunning
+                onClicked: {
+                    generation.text = qsTr("Generation: ") + gameOfLifeModel.getIteration()
+                    gameOfLifeModel.nextStep()
+                }
+            }
+
+            Button {
+                property bool isRunning: false
+                id: playButton
                 text: timer.running ? "❙❙" : "▶️"
                 Layout.alignment: Qt.AlignLeft
-                onClicked: timer.running = !timer.running
+                focus: true
+                onClicked:  {
+                    isRunning = !isRunning
+                    timer.running = !timer.running
+                }
             }
 
             Label {
-                text: qsTr("Generation:");
+                id: generation
+                text: qsTr("Generation: 0");
                 Layout.alignment: Qt.AlignLeft
             }
 
@@ -100,12 +166,13 @@ ApplicationWindow {
 
         Timer {
             id: timer
-            interval: 1000 - (980 * slider.value)
+            interval: 1000 * slider.value + 1
             running: false
             repeat: true
 
             onTriggered: {
-
+                generation.text = qsTr("Generation: ") + gameOfLifeModel.getIteration()
+                gameOfLifeModel.nextStep()
             }
         }
     }
