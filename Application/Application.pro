@@ -11,13 +11,23 @@ SOURCES += \
         GameOfLifeModel.cpp \
         main.cpp
 
-LIBS += -lboost_filesystem  \
-        -lboost_system \
+LIBS += -lboost_system \
+        -lboost_filesystem  \
         -lboost_program_options \
-        -pthread \
-        -lboost_thread
+        -pthread
 
-INCLUDEPATH += /usr/include/boost
+macx {
+   LIBS += -L /usr/local/Cellar/boost/1.75.0_2/lib \
+            -lboost_thread-mt
+   INCLUDEPATH += /usr/local/Cellar/boost/1.75.0_2/include
+}
+
+unix:!macx {
+    LIBS += lboost_thread
+    INCLUDEPATH += /usr/include/boost
+}
+
+
 CCFLAG += -O2
 RESOURCES += qml.qrc
 
