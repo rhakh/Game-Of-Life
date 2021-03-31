@@ -442,13 +442,43 @@ QString filterFileName(const QString &urlString) {
         return urlString;
 }
 
-bool GameOfLifeModel::loadFile(const QString &fileName) {
-    QString filtedName = filterFileName(fileName);
-
-    std::cout << "enter to loadFile: " << filtedName.toStdString() << std::endl;
-    auto res = parseFile(filtedName.toStdString());
+bool GameOfLifeModel::loadFile(const QString &filePath) {
+    std::cout << "enter to loadFile: " << filePath.toStdString() << std::endl;
+    auto res = parseFile(filePath.toStdString());
 
     emit dataChanged(index(0, 0), index(height - 1, width - 1), {CellRole});
+
+    std::cout << "return res = " << res << std::endl;
+    return res;
+}
+
+std::string GameOfLifeModel::prepareMap() {
+    std::stringstream ss;
+
+    ss << "height = " << height << ", width = " << width << std::endl;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++)
+            ss << ((*mMap)[y][x] & 0x01 ? "*" : ".");
+        ss << std::endl;
+    }
+
+    return ss.str();
+}
+
+bool GameOfLifeModel::saveToFile(const QString &filePath) {
+    std::string mapStr = prepareMap();
+    bool res = false;
+
+    std::cout << "enter to saveToFile: " << filePath.toStdString() << std::endl;
+
+    try {
+        std::ofstream file(filePath.toStdString(), std::ofstream::out);
+        file << mapStr;
+        file.close();
+        res = true;
+    } catch (const char* msg) {
+        std::cerr << "Error: " << msg << std::endl;
+    }
 
     std::cout << "return res = " << res << std::endl;
     return res;
@@ -482,6 +512,7 @@ void GameOfLifeModel::randomFillMap() {
     for (int i = 0; i < this->height; i++)
         std::fill((*mMap)[i].begin(), (*mMap)[i].end(), 0);
     _randomFillMap();
+    iteration = 0;
     emit dataChanged(index(0, 0), index(height - 1, width - 1), {CellRole});
 }
 

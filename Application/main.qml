@@ -5,6 +5,7 @@ import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import QtQuick.Dialogs 1.2
 import GOL 1.0
+import Qt.labs.platform 1.1
 
 ApplicationWindow {
     id: root
@@ -20,15 +21,35 @@ ApplicationWindow {
     FileDialog {
         id: openFileDialog
         title: "Please choose a file"
+        fileMode: FileDialog.OpenFile
         folder: ""
-        selectMultiple: false
-        width: root.width
-        height: root.height
         onAccepted: {
-            console.log("You chose: " + openFileDialog.fileUrls)
-            gameOfLifeModel.loadFile(openFileDialog.fileUrl.toString()) // TODO: check result
+            console.log("You chose: " + openFileDialog.file)
+            var path = saveFileDialog.file.toString();
+            // remove prefixed "file://"
+            path = path.replace(/^(file:\/{2})/,"");
+            path = decodeURIComponent(path);
+            gameOfLifeModel.loadFile(path) // TODO: check result
             generation.text = qsTr("Generation: 0")
             tableView.forceLayout()
+        }
+        onRejected: {
+            console.log("Canceled")
+        }
+    }
+
+    FileDialog {
+        id: saveFileDialog
+        title: "Save a file"
+        fileMode: FileDialog.SaveFile
+        folder: ""
+        onAccepted: {
+            console.log("You chose: " + saveFileDialog.file)
+            var path = saveFileDialog.file.toString();
+            // remove prefixed "file://"
+            path = path.replace(/^(file:\/{2})/,"");
+            path = decodeURIComponent(path);
+            gameOfLifeModel.saveToFile(path); // TODO: check result
         }
         onRejected: {
             console.log("Canceled")
@@ -63,7 +84,7 @@ ApplicationWindow {
                 if (value & 0x01) {
                     switch ((value & 0xfe) >> 1) {
                     case 1:
-                        return "#fc1e0f" // red
+                        return "#FC1E0F" // red
                     case 2:
                         return "#FFFF00" // yellow
                     case 3:
@@ -73,7 +94,9 @@ ApplicationWindow {
                     case 5:
                         return "#E040FB" // purp
                     case 6:
+                        return "#1DE9B6" // ocean
                     case 7:
+                        return "#1DE9B6" // ocean
                     case 8:
                         return "#1DE9B6" // ocean
                     }
@@ -129,7 +152,7 @@ ApplicationWindow {
                 text: qsTr("Save")
                 Layout.alignment: Qt.AlignLeft
                 onClicked: {
-
+                    saveFileDialog.open()
                 }
             }
 
