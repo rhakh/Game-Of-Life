@@ -18,15 +18,15 @@ ApplicationWindow {
     title: qsTr("Game of Life")
 
     FileDialog {
-        id: fileDialog
+        id: openFileDialog
         title: "Please choose a file"
         folder: ""
         selectMultiple: false
         width: root.width
         height: root.height
         onAccepted: {
-            console.log("You chose: " + fileDialog.fileUrls)
-            gameOfLifeModel.loadFile(fileDialog.fileUrl.toString()) // TODO: check result
+            console.log("You chose: " + openFileDialog.fileUrls)
+            gameOfLifeModel.loadFile(openFileDialog.fileUrl.toString()) // TODO: check result
             generation.text = qsTr("Generation: 0")
             tableView.forceLayout()
         }
@@ -109,17 +109,28 @@ ApplicationWindow {
             spacing: 10
 
             Button {
-                text: qsTr("Load")
+                text: qsTr("New")
                 Layout.leftMargin: 10
                 Layout.alignment: Qt.AlignLeft
                 onClicked: {
-                    fileDialog.open()
+                    gameOfLifeModel.randomFillMap()
+                }
+            }
+
+            Button {
+                text: qsTr("Load")
+                Layout.alignment: Qt.AlignLeft
+                onClicked: {
+                    openFileDialog.open()
                 }
             }
 
             Button {
                 text: qsTr("Save")
                 Layout.alignment: Qt.AlignLeft
+                onClicked: {
+
+                }
             }
 
             Slider {

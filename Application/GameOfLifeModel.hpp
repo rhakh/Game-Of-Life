@@ -47,13 +47,14 @@ public:
     Q_INVOKABLE void nextStep();
     Q_INVOKABLE bool loadFile(const QString &fileName);
     Q_INVOKABLE int  getIteration();
+    Q_INVOKABLE void randomFillMap() override;
 
 private:
     void setCell(int x, int y) override;
     void clearCell(int x, int y) override;
     void printMap() override;
-    void randomFillMap() override;
     int getLiveNeighbours(int x, int y) override;
+    void _randomFillMap();
     bool parseFile(const std::string &fileName);
 
 private:

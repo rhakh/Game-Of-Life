@@ -259,8 +259,9 @@ void GameOfLifeModel::liveOneGeneration() {
             // Is alive ?
             if ((*mTmp_map)[y][x] & 0x01) {
                 // Overpopulation or underpopulation - than die
-                if (live_cells_cnt != 2 && live_cells_cnt != 3)
+                if (live_cells_cnt != 2 && live_cells_cnt != 3) {
                     clearCell(x, y);
+                }
             } else if (live_cells_cnt == 3) {
                 // Has 3 neighbours - than revive
                 setCell(x, y);
@@ -320,6 +321,8 @@ QVariant GameOfLifeModel::data(const QModelIndex &index, int role) const
 
     const auto y = static_cast<int>(index.row());
     const auto x = static_cast<int>(index.column());
+
+    // std::cout << "data: x = " << x << ", y = " << y << std::endl;
 
     return QVariant((*mMap)[y][x]);
 }
@@ -456,7 +459,7 @@ int GameOfLifeModel::getIteration()
     return iteration;
 }
 
-void GameOfLifeModel::randomFillMap() {
+void GameOfLifeModel::_randomFillMap() {
     unsigned seed;
     int x, y;
 
@@ -473,6 +476,13 @@ void GameOfLifeModel::randomFillMap() {
             setCell(x, y);
         }
     }
+}
+
+void GameOfLifeModel::randomFillMap() {
+    for (int i = 0; i < this->height; i++)
+        std::fill((*mMap)[i].begin(), (*mMap)[i].end(), 0);
+    _randomFillMap();
+    emit dataChanged(index(0, 0), index(height - 1, width - 1), {CellRole});
 }
 
 void GameOfLifeModel::setCell(int x, int y) {
