@@ -499,8 +499,8 @@ void GameOfLifeModel::_randomFillMap() {
 
     // Randomly initialise cell map with ~50% on pixels
     for (int half_len = (height * width) / 2; half_len > 0; half_len--) {
-        x = rand() % (width - 1);
-        y = rand() % (height - 1);
+        x = rand() % (width);
+        y = rand() % (height);
 
         if (((*mMap)[y][x] & 0x01) == 0) {
             setCell(x, y);

@@ -23,7 +23,7 @@ macx {
 }
 
 unix:!macx {
-    LIBS += lboost_thread
+    LIBS += -lboost_thread
     INCLUDEPATH += /usr/include/boost
 }
 
@@ -48,3 +48,6 @@ HEADERS += \
     CLI.hpp \
     GameOfLife.hpp \
     GameOfLifeModel.hpp
+
+DISTFILES += \
+    qmldir

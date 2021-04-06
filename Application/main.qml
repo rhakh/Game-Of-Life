@@ -18,43 +18,6 @@ ApplicationWindow {
     color: "#09102B"
     title: qsTr("Game of Life")
 
-    FileDialog {
-        id: openFileDialog
-        title: "Please choose a file"
-        fileMode: FileDialog.OpenFile
-        folder: ""
-        onAccepted: {
-            console.log("You chose: " + openFileDialog.file)
-            var path = saveFileDialog.file.toString();
-            // remove prefixed "file://"
-            path = path.replace(/^(file:\/{2})/,"");
-            path = decodeURIComponent(path);
-            gameOfLifeModel.loadFile(path) // TODO: check result
-            generation.text = qsTr("Generation: 0")
-            tableView.forceLayout()
-        }
-        onRejected: {
-            console.log("Canceled")
-        }
-    }
-
-    FileDialog {
-        id: saveFileDialog
-        title: "Save a file"
-        fileMode: FileDialog.SaveFile
-        folder: ""
-        onAccepted: {
-            console.log("You chose: " + saveFileDialog.file)
-            var path = saveFileDialog.file.toString();
-            // remove prefixed "file://"
-            path = path.replace(/^(file:\/{2})/,"");
-            path = decodeURIComponent(path);
-            gameOfLifeModel.saveToFile(path); // TODO: check result
-        }
-        onRejected: {
-            console.log("Canceled")
-        }
-    }
 
     TableView {
         id: tableView
@@ -75,14 +38,11 @@ ApplicationWindow {
             required property var model
             required property int value
 
-            // two color
-            // color: value & 0x01 ? "#6200EE" : "#EFE5FD"
-
-            // multi color
             color: {
-                // console.log("value = " + value.toString() + ", 0x01 = " + (value & 0xfe).toString() + ", >> 1 = " + ((value & 0x01) >> 1).toString())
                 if (value & 0x01) {
                     switch ((value & 0xfe) >> 1) {
+                    case 0:
+                        return "#EC407A" // pink
                     case 1:
                         return "#FC1E0F" // red
                     case 2:
@@ -94,9 +54,7 @@ ApplicationWindow {
                     case 5:
                         return "#E040FB" // purp
                     case 6:
-                        return "#1DE9B6" // ocean
                     case 7:
-                        return "#1DE9B6" // ocean
                     case 8:
                         return "#1DE9B6" // ocean
                     }
@@ -107,7 +65,9 @@ ApplicationWindow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: parent.model.value = !parent.value
+                onClicked: {
+                    parent.model.value = !parent.model.value
+                }
             }
         }
 
@@ -208,6 +168,44 @@ ApplicationWindow {
                 generation.text = qsTr("Generation: ") + gameOfLifeModel.getIteration()
                 gameOfLifeModel.nextStep()
             }
+        }
+    }
+
+    FileDialog {
+        id: openFileDialog
+        title: "Please choose a file"
+        fileMode: FileDialog.OpenFile
+        folder: ""
+        onAccepted: {
+            console.log("You chose: " + openFileDialog.file)
+            var path = openFileDialog.file.toString();
+            // remove prefixed "file://"
+            path = path.replace(/^(file:\/{2})/, "");
+            path = decodeURIComponent(path);
+            gameOfLifeModel.loadFile(path); // TODO: check result
+            generation.text = qsTr("Generation: 0")
+            tableView.forceLayout()
+        }
+        onRejected: {
+            console.log("Canceled")
+        }
+    }
+
+    FileDialog {
+        id: saveFileDialog
+        title: "Save a file"
+        fileMode: FileDialog.SaveFile
+        folder: ""
+        onAccepted: {
+            console.log("You chose: " + saveFileDialog.file)
+            var path = saveFileDialog.file.toString();
+            // remove prefixed "file://"
+            path = path.replace(/^(file:\/{2})/, "");
+            path = decodeURIComponent(path);
+            gameOfLifeModel.saveToFile(path); // TODO: check result
+        }
+        onRejected: {
+            console.log("Canceled")
         }
     }
 }
