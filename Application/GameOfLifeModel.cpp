@@ -443,7 +443,6 @@ QString filterFileName(const QString &urlString) {
 }
 
 bool GameOfLifeModel::loadFile(const QString &filePath) {
-    std::cout << "enter to loadFile: " << filePath.toStdString() << std::endl;
     auto res = parseFile(filePath.toStdString());
 
     emit dataChanged(index(0, 0), index(height - 1, width - 1), {CellRole});
@@ -469,8 +468,6 @@ bool GameOfLifeModel::saveToFile(const QString &filePath) {
     std::string mapStr = prepareMap();
     bool res = false;
 
-    std::cout << "enter to saveToFile: " << filePath.toStdString() << std::endl;
-
     try {
         std::ofstream file(filePath.toStdString(), std::ofstream::out);
         file << mapStr;
@@ -480,7 +477,6 @@ bool GameOfLifeModel::saveToFile(const QString &filePath) {
         std::cerr << "Error: " << msg << std::endl;
     }
 
-    std::cout << "return res = " << res << std::endl;
     return res;
 }
 

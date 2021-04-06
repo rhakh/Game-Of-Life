@@ -64,5 +64,5 @@ int main(int argc, char **argv) {
 libs for compiling
 sudo apt-get install libboost-all-dev
 sudo apt install libgtest-dev https://medium.com/@rvarago/introduction-to-google-c-unit-testing-3d564c30f3b0
-
+sudo apt-get install -y qml-module-qtcharts
 */
