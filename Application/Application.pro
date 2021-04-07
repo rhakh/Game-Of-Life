@@ -1,6 +1,5 @@
-QT += quick
+QT += charts qml quick
 QT += quickcontrols2
-QT += charts
 
 CONFIG += c++14
 
