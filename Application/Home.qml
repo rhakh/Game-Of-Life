@@ -95,7 +95,7 @@ Item {
 
         id: footer
         height: 50
-        color: "#F3F3F4"
+        color: "white" // "#F3F3F4"
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
