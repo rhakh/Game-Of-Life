@@ -9,6 +9,7 @@ CONFIG += c++14
 
 SOURCES += \
         GameOfLifeModel.cpp \
+        TestRunner.cpp \
         main.cpp
 
 LIBS += -lboost_system \
@@ -47,7 +48,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     CLI.hpp \
     GameOfLife.hpp \
-    GameOfLifeModel.hpp
+    GameOfLifeModel.hpp \
+    TestRunner.h
 
 DISTFILES += \
     qmldir

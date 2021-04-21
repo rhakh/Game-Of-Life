@@ -4,5 +4,6 @@
         <file>Home.qml</file>
         <file>Algorithm_analysis.qml</file>
         <file>Help.qml</file>
+        <file>icons/favicon.png</file>
     </qresource>
 </RCC>

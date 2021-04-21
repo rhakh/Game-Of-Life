@@ -106,25 +106,43 @@ Item {
 
                     axisY.min = 0;
                     axisY.max = 10;
+
+                    testRunner.run(function(file, time, generation) {
+                        console.log("File: " + file)
+                        console.log("Time: " + time)
+                        console.log("Generation: " + generation)
+                    })
+
+
                 }
             }
         }
     }
+
+    // drop-down list of all possible maps
+    // drop-down list of possible generation
 
     FileDialog {
         id: openMultFilesDialog
         title: "Please choose a file"
         fileMode: FileDialog.OpenFiles
         folder: ""
+        property variant editFiles: []
         onAccepted: {
-            console.log("You chose: " + openMultFilesDialog.file)
-            var pathes = openMultFilesDialog.files;
+            console.log("You chose: " + openMultFilesDialog.files)
+            var files = openMultFilesDialog.files;
 
+            // clear previous files
+            editFiles = [];
+            for (var i = 0; i < files.length; i++) {
+                // remove prefixed "file://"
+                files[i] = files[i].replace(/^(file:\/{2})/, "");
+                files[i] = decodeURIComponent(files[i]);
+                editFiles.push(files[i])
+            }
 
-            // remove prefixed "file://"
-            var path = pathes.replace(/^(file:\/{2})/, "");
-            path = decodeURIComponent(path);
-
+            console.log("QML: Files = " + editFiles)
+            testRunner.setup(editFiles, [10, 100, 500], "/home/rhakh/Game-Of-Life/Patterns/puffer-train.txt")
         }
         onRejected: {
             console.log("Canceled")

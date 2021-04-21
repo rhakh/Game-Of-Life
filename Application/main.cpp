@@ -1,7 +1,10 @@
 #include <QtWidgets/QApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
+#include <QQmlContext>
+#include <QIcon>
 #include "GameOfLifeModel.hpp"
+#include "TestRunner.h"
 
 int main(int argc, char *argv[])
 {
@@ -10,6 +13,9 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication app(argc, argv);
+
+    // set icon
+    app.setWindowIcon(QIcon(":/icons/favicon.png"));
 
     // set style
     QQuickStyle::setStyle("Material");
@@ -24,6 +30,11 @@ int main(int argc, char *argv[])
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
+
+    // Add TestRunner as global property
+    TestRunner *testRunner = new TestRunner();
+    engine.rootContext()->setContextProperty("testRunner", testRunner);
+
     engine.load(url);
 
     return app.exec();
