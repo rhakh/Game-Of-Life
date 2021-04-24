@@ -92,25 +92,46 @@ Item {
             }
 
             Button {
-                text: qsTr("Add")
+                text: qsTr("Run")
                 Layout.alignment: Qt.AlignLeft
+                property var series: new Map();
                 onClicked: {
-                    var line = chart.createSeries(ChartView.SeriesTypeLine, "Concurrent", axisX, axisY);
+                    // clear chart series
+                    chart.removeAllSeries();
+                    series.clear();
 
-                    line.append(0,0)
-                    line.append(1.1,2.1)
-                    line.append(4.5,4.5)
+//                    var line = chart.createSeries(ChartView.SeriesTypeLine, "Concurrent", axisX, axisY);
 
-                    axisX.min = 0;
-                    axisX.max = 10;
+//                    line.append(0,0)
+//                    line.append(1.1,2.1)
+//                    line.append(4.5,4.5)
+//                    line.objectName =
 
-                    axisY.min = 0;
-                    axisY.max = 10;
+//                    axisX.min = 0;
+//                    axisX.max = 10;
+
+//                    axisY.min = 0;
+//                    axisY.max = 10;
 
                     testRunner.run(function(file, time, generation) {
+                        file = basename(file)
                         console.log("File: " + file)
                         console.log("Time: " + time)
                         console.log("Generation: " + generation)
+
+                        if (series.has(file)) {
+                            console.log("Series has: " + file);
+                            series.get(file).append(generation, time);
+                        } else {
+                            console.log("Series has not: " + file);
+                            var line = chart.createSeries(ChartView.SeriesTypeLine, file, axisX, axisY);
+                            line.append(generation, time);
+                            series.set(file, line)
+                        }
+
+                        axisY.max = (axisY.max > time ? axisY.max : time);
+                        axisX.max = (axisX.max > generation ? axisX.max : generation);
+
                     })
 
 
@@ -142,10 +163,14 @@ Item {
             }
 
             console.log("QML: Files = " + editFiles)
-            testRunner.setup(editFiles, [10, 100, 500], "/home/rhakh/Game-Of-Life/Patterns/puffer-train.txt")
+            testRunner.setup(editFiles, [10, 100, 500, 1000, 1500], "/home/rhakh/Game-Of-Life/Patterns/puffer-train-big.txt")
         }
         onRejected: {
             console.log("Canceled")
         }
+    }
+
+    function basename(str) {
+        return (str.slice(str.lastIndexOf("/")+1))
     }
 }

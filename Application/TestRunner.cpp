@@ -83,8 +83,8 @@ void TestRunner::run(const QJSValue &callback) {
 
         std::cout << "TestRunner: generation: " << generation << std::endl;
 
-        command.str("");
         for (auto &file: mFiles) {
+            command.str("");
 
             std::cout << "TestRunner: file: " << file << std::endl;
 
