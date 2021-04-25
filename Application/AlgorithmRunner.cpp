@@ -75,16 +75,14 @@ void AlgorithmRunner::run(const QJSValue &callback) {
     std::stringstream command;
     int status = 0, time = 0;
 
-    std::cout << "TestRunner: enter run" << std::endl;
-
     for (int generation = 0; generation <= mLastGeneration; generation += mStep) {
 
-        std::cout << "TestRunner: generation: " << generation << std::endl;
+        std::cout << "AlgorithmRunner: generation: " << generation << std::endl;
 
         for (auto &file: mFiles) {
             command.str("");
 
-            std::cout << "TestRunner: file: " << file << std::endl;
+            std::cout << "AlgorithmRunner: file: " << file << std::endl;
 
             // check if this executable must be run by 'mpirun'
             if (file.find("mpi") != std::string::npos)
@@ -92,16 +90,18 @@ void AlgorithmRunner::run(const QJSValue &callback) {
 
             command << "" << file << " -f " << mMap << " -n " << generation;
 
-            std::cout << "TestRunner: Command: " << command.str() << std::endl;
+            std::cout << "AlgorithmRunner: Command: " << command.str() << std::endl;
 
             auto returned_str = execCommand(command.str(), status);
 
-            std::cout << "TestRunner: Returned string: " << returned_str << std::endl;
+            std::cout << "AlgorithmRunner: Returned string: " << returned_str << std::endl;
 
             time = parseTime(returned_str);
+            std::cout << "AlgorithmRunner: callback(" << file.c_str()
+                      << ", " << time
+                      << ", " << generation
+                      << std::endl;
             cbCopy.call(QJSValueList {file.c_str(), time, generation});
         }
     }
-
-    std::cout << "TestRunner: return run" << std::endl;
 }

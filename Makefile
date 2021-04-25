@@ -10,6 +10,7 @@ ifeq ($(OS),Darwin)
 					-L /usr/local/Cellar/boost/1.72.0_3/lib
   FLAGS = -std=c++14 -Wall -Wextra -Werror -O2 \
 			-Wno-unused -Wno-unused-parameter -Wno-unused-result -Wno-unused-command-line-argument \
+            -Wno-unknown-warning-option \
 			-lboost_filesystem  -lboost_system  -lboost_program_options \
 			-pthread -lboost_thread-mt
 else

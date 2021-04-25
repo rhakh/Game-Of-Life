@@ -69,7 +69,6 @@ Item {
 
             Button {
                 text: qsTr("Select map")
-                Layout.leftMargin: 10
                 Layout.alignment: Qt.AlignLeft
                 onClicked: {
                     openFileDialog.open()
@@ -78,6 +77,7 @@ Item {
 
             TextField {
                 id: finishGeneration
+                Layout.alignment: Qt.AlignLeft
                 placeholderText: qsTr("Last Generation")
                 validator: RegExpValidator { regExp: /[0-9A-F]+/ }
                 inputMethodHints: Qt.ImhDigitsOnly
@@ -86,6 +86,7 @@ Item {
 
             TextField {
                 id: step
+                Layout.alignment: Qt.AlignLeft
                 placeholderText: qsTr("Step")
                 validator: RegExpValidator { regExp: /[0-9A-F]+/ }
                 inputMethodHints: Qt.ImhDigitsOnly
@@ -94,6 +95,7 @@ Item {
 
             Button {
                 text: qsTr("Run")
+                anchors.rightMargin: 10
                 Layout.alignment: Qt.AlignLeft
                 property var series: new Map();
                 onClicked: {
