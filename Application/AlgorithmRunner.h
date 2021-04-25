@@ -1,5 +1,5 @@
-#ifndef TESTRUNNER_H
-#define TESTRUNNER_H
+#ifndef ALGORITHMRUNNER_H
+#define ALGORITHMRUNNER_H
 
 #include <string>
 #include <vector>
@@ -9,20 +9,21 @@
 #include <QJSValue>
 #include <QJSEngine>
 
-class TestRunner: public QObject
+class AlgorithmRunner: public QObject
 {
     Q_OBJECT
 
     std::vector<std::string> mFiles;
-    std::vector<std::string> mGenerations;
+    int mLastGeneration;
+    int mStep;
     std::string mMap;
 
 public:
-    TestRunner();
+    AlgorithmRunner();
 
 public slots:
     void run(const QJSValue &callback);
-    void setup(QList<QString> files, QList<QString> generations, QString map);
+    void setup(QList<QString> files, QString lastGeneration, QString step, QString map);
 };
 
-#endif // TESTRUNNER_H
+#endif // ALGORITHMRUNNER_H

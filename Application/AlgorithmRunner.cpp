@@ -1,4 +1,4 @@
-#include "TestRunner.h"
+#include "AlgorithmRunner.h"
 #include <QString>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
@@ -9,7 +9,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/optional/optional_io.hpp>
 
-TestRunner::TestRunner() {
+AlgorithmRunner::AlgorithmRunner() {
 
 }
 
@@ -58,28 +58,26 @@ int parseTime(std::string &spendTime) {
     return time;
 }
 
-void TestRunner::setup(QList<QString> files, QList<QString> generations, QString map) {
+void AlgorithmRunner::setup(QList<QString> files, QString lastGeneration, QString step, QString map) {
     mMap = map.toStdString();
+    mLastGeneration = atoi(lastGeneration.toStdString().c_str());
+    mStep = atoi(step.toStdString().c_str());
     std::cout << "TestRunner: map = " << map.toStdString() << std::endl;
+
     for (auto it = files.begin(); it != files.end(); it++) {
         mFiles.push_back(it->toStdString());
         std::cout << "TestRunner: file = " << it->toStdString() << std::endl;
     }
-    for (auto it = generations.begin(); it != generations.end(); it++) {
-        mGenerations.push_back(it->toStdString());
-        std::cout << "TestRunner: generation = " << it->toStdString() << std::endl;
-    }
 }
 
-void TestRunner::run(const QJSValue &callback) {
+void AlgorithmRunner::run(const QJSValue &callback) {
     QJSValue cbCopy(callback);
-    // QJSEngine *engine = qjsEngine(this);
     std::stringstream command;
     int status = 0, time = 0;
 
     std::cout << "TestRunner: enter run" << std::endl;
 
-    for (auto &generation: mGenerations) {
+    for (int generation = 0; generation <= mLastGeneration; generation += mStep) {
 
         std::cout << "TestRunner: generation: " << generation << std::endl;
 
@@ -88,7 +86,7 @@ void TestRunner::run(const QJSValue &callback) {
 
             std::cout << "TestRunner: file: " << file << std::endl;
 
-            // if this executable must be run by 'mpirun'
+            // check if this executable must be run by 'mpirun'
             if (file.find("mpi") != std::string::npos)
                 command << "mpirun ";
 
@@ -101,8 +99,7 @@ void TestRunner::run(const QJSValue &callback) {
             std::cout << "TestRunner: Returned string: " << returned_str << std::endl;
 
             time = parseTime(returned_str);
-            // cbCopy.call(QJSValueList { engine->toScriptValue(file), time });
-            cbCopy.call(QJSValueList {file.c_str(), time, generation.c_str()});
+            cbCopy.call(QJSValueList {file.c_str(), time, generation});
         }
     }
 

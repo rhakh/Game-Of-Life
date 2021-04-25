@@ -21,13 +21,14 @@ Item {
 
         ChartView {
             id: chart
-            title: "Line"
+            title: ""
             anchors.fill: parent
             antialiasing: true
             theme: ChartView.ChartThemeBlueCerulean
 
             ValueAxis {
                 id: axisX
+                // labelFormat: qsTr("%d Generation")
                 gridVisible: true
                 tickCount: 5
                 min: 0
@@ -36,36 +37,11 @@ Item {
 
             ValueAxis {
                 id: axisY
+                labelFormat: qsTr("%d ms")
                 gridVisible: true
                 tickCount: 5
                 min: 0
                 max: 10
-            }
-
-            LineSeries {
-                name: "Serial"
-                axisX: axisX
-                axisY: axisY
-                XYPoint { x: 0; y: 0 }
-                XYPoint { x: 1.1; y: 2.1 }
-                XYPoint { x: 1.9; y: 3.3 }
-                XYPoint { x: 2.1; y: 2.1 }
-                XYPoint { x: 2.9; y: 4.9 }
-                XYPoint { x: 3.4; y: 3.0 }
-                XYPoint { x: 4.1; y: 3.3 }
-            }
-
-            LineSeries {
-                name: "MPI"
-                axisX: axisX
-                axisY: axisY
-                XYPoint { x: 2; y: 3 }
-                XYPoint { x: 2.1; y: 4.1 }
-                XYPoint { x: 3.9; y: 5.3 }
-                XYPoint { x: 4.1; y: 4.1 }
-                XYPoint { x: 5.9; y: 6.9 }
-                XYPoint { x: 6.4; y: 5.0 }
-                XYPoint { x: 7.1; y: 5.3 }
             }
         }
     }
@@ -83,12 +59,37 @@ Item {
             spacing: 10
 
             Button {
-                text: qsTr("Select")
+                text: qsTr("Select algorithms")
                 Layout.leftMargin: 10
                 Layout.alignment: Qt.AlignLeft
                 onClicked: {
                     openMultFilesDialog.open()
                 }
+            }
+
+            Button {
+                text: qsTr("Select map")
+                Layout.leftMargin: 10
+                Layout.alignment: Qt.AlignLeft
+                onClicked: {
+                    openFileDialog.open()
+                }
+            }
+
+            TextField {
+                id: finishGeneration
+                placeholderText: qsTr("Last Generation")
+                validator: RegExpValidator { regExp: /[0-9A-F]+/ }
+                inputMethodHints: Qt.ImhDigitsOnly
+                selectByMouse: true
+            }
+
+            TextField {
+                id: step
+                placeholderText: qsTr("Step")
+                validator: RegExpValidator { regExp: /[0-9A-F]+/ }
+                inputMethodHints: Qt.ImhDigitsOnly
+                selectByMouse: true
             }
 
             Button {
@@ -100,20 +101,13 @@ Item {
                     chart.removeAllSeries();
                     series.clear();
 
-//                    var line = chart.createSeries(ChartView.SeriesTypeLine, "Concurrent", axisX, axisY);
+                    // TODO: validate settings
 
-//                    line.append(0,0)
-//                    line.append(1.1,2.1)
-//                    line.append(4.5,4.5)
-//                    line.objectName =
+                    // setup settings
+                    algorithmRunner.setup(openMultFilesDialog.choosenFiles, finishGeneration.text, step.text, openFileDialog.choosenMap)
 
-//                    axisX.min = 0;
-//                    axisX.max = 10;
-
-//                    axisY.min = 0;
-//                    axisY.max = 10;
-
-                    testRunner.run(function(file, time, generation) {
+                    // run algorithms and then add results to chart
+                    algorithmRunner.run(function(file, time, generation) {
                         file = basename(file)
                         console.log("File: " + file)
                         console.log("Time: " + time)
@@ -134,36 +128,53 @@ Item {
 
                     })
 
-
+                    console.log("onClicked DONE")
                 }
             }
         }
     }
 
-    // drop-down list of all possible maps
-    // drop-down list of possible generation
-
     FileDialog {
         id: openMultFilesDialog
-        title: "Please choose a file"
+        title: qsTr("Please choose an executable files")
         fileMode: FileDialog.OpenFiles
         folder: ""
-        property variant editFiles: []
+        property variant choosenFiles: []
         onAccepted: {
             console.log("You chose: " + openMultFilesDialog.files)
             var files = openMultFilesDialog.files;
 
             // clear previous files
-            editFiles = [];
+            choosenFiles = [];
             for (var i = 0; i < files.length; i++) {
                 // remove prefixed "file://"
                 files[i] = files[i].replace(/^(file:\/{2})/, "");
                 files[i] = decodeURIComponent(files[i]);
-                editFiles.push(files[i])
+                choosenFiles.push(files[i])
             }
 
-            console.log("QML: Files = " + editFiles)
-            testRunner.setup(editFiles, [10, 100, 500, 1000, 1500], "/home/rhakh/Game-Of-Life/Patterns/puffer-train-big.txt")
+            console.log("QML: Files = " + choosenFiles)
+        }
+        onRejected: {
+            console.log("Canceled")
+        }
+    }
+
+    FileDialog {
+        id: openFileDialog
+        title: "Please choose a map"
+        fileMode: FileDialog.OpenFile
+        folder: ""
+        property var choosenMap
+        onAccepted: {
+            choosenMap = ""
+            console.log("You chose: " + openFileDialog.file)
+            var path = openFileDialog.file.toString();
+            // remove prefixed "file://"
+            path = path.replace(/^(file:\/{2})/, "");
+            path = decodeURIComponent(path);
+            // TODO: check result
+            choosenMap = path
         }
         onRejected: {
             console.log("Canceled")

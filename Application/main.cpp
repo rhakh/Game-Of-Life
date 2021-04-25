@@ -4,7 +4,7 @@
 #include <QQmlContext>
 #include <QIcon>
 #include "GameOfLifeModel.hpp"
-#include "TestRunner.h"
+#include "AlgorithmRunner.h"
 
 int main(int argc, char *argv[])
 {
@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
     }, Qt::QueuedConnection);
 
     // Add TestRunner as global property
-    TestRunner *testRunner = new TestRunner();
-    engine.rootContext()->setContextProperty("testRunner", testRunner);
+    AlgorithmRunner *testRunner = new AlgorithmRunner();
+    engine.rootContext()->setContextProperty("algorithmRunner", testRunner);
 
     engine.load(url);
 
