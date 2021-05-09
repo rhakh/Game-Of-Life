@@ -1,6 +1,5 @@
-#include "AlgorithmRunner.h"
-#include <QString>
 #include <sstream>
+#include <thread>
 #include <boost/lexical_cast.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix.hpp>
@@ -8,6 +7,8 @@
 #include <boost/config/warning_disable.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/optional/optional_io.hpp>
+#include <QString>
+#include "AlgorithmRunner.h"
 
 AlgorithmRunner::AlgorithmRunner() {
 
@@ -71,37 +72,44 @@ void AlgorithmRunner::setup(QList<QString> files, QString lastGeneration, QStrin
 }
 
 void AlgorithmRunner::run(const QJSValue &callback) {
-    QJSValue cbCopy(callback);
-    std::stringstream command;
-    int status = 0, time = 0;
+    auto runTests = [&](const QJSValue &callback) {
+        QJSValue cbCopy(callback);
+        std::stringstream command;
+        int status = 0, time = 0;
 
-    for (int generation = 0; generation <= mLastGeneration; generation += mStep) {
+        for (int generation = 0; generation <= mLastGeneration; generation += mStep) {
 
-        std::cout << "AlgorithmRunner: generation: " << generation << std::endl;
+            std::cout << "AlgorithmRunner: generation: " << generation << std::endl;
 
-        for (auto &file: mFiles) {
-            command.str("");
+            for (auto &file: mFiles) {
+                command.str("");
 
-            std::cout << "AlgorithmRunner: file: " << file << std::endl;
+                std::cout << "AlgorithmRunner: file: " << file << std::endl;
 
-            // check if this executable must be run by 'mpirun'
-            if (file.find("mpi") != std::string::npos)
-                command << "mpirun ";
+                // check if this executable must be run by 'mpirun'
+                if (file.find("mpi") != std::string::npos)
+                    command << "mpirun ";
 
-            command << "" << file << " -f " << mMap << " -n " << generation;
+                command << "" << file << " -f " << mMap << " -n " << generation;
 
-            std::cout << "AlgorithmRunner: Command: " << command.str() << std::endl;
+                std::cout << "AlgorithmRunner: Command: " << command.str() << std::endl;
 
-            auto returned_str = execCommand(command.str(), status);
+                auto returned_str = execCommand(command.str(), status);
 
-            std::cout << "AlgorithmRunner: Returned string: " << returned_str << std::endl;
+                std::cout << "AlgorithmRunner: Returned string: " << returned_str << std::endl;
 
-            time = parseTime(returned_str);
-            std::cout << "AlgorithmRunner: callback(" << file.c_str()
-                      << ", " << time
-                      << ", " << generation
-                      << std::endl;
-            cbCopy.call(QJSValueList {file.c_str(), time, generation});
+                time = parseTime(returned_str);
+                std::cout << "AlgorithmRunner: callback(" << file.c_str()
+                          << ", " << time
+                          << ", " << generation
+                          << std::endl;
+
+                // update chart by calling callback function
+                cbCopy.call(QJSValueList {file.c_str(), time, generation});
+            }
         }
-    }
+    };
+
+    std::thread t(runTests, callback);
+    t.detach();
 }

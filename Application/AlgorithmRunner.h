@@ -18,6 +18,9 @@ class AlgorithmRunner: public QObject
     int mStep;
     std::string mMap;
 
+    // used to update chart
+    QObject *mRootObject;
+
 public:
     AlgorithmRunner();
 

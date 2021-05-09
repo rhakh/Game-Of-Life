@@ -82,6 +82,10 @@ Item {
                 validator: RegExpValidator { regExp: /[0-9A-F]+/ }
                 inputMethodHints: Qt.ImhDigitsOnly
                 selectByMouse: true
+                onTextChanged: {
+                    var generation = finishGeneration.text;
+                    axisX.max = (axisX.max > generation ? axisX.max : generation);
+                }
             }
 
             TextField {
@@ -127,7 +131,6 @@ Item {
 
                         axisY.max = (axisY.max > time ? axisY.max : time);
                         axisX.max = (axisX.max > generation ? axisX.max : generation);
-
                     })
 
                     console.log("onClicked DONE")
@@ -185,5 +188,26 @@ Item {
 
     function basename(str) {
         return (str.slice(str.lastIndexOf("/")+1))
+    }
+
+    function addResultToChart(file, time, generation) {
+        file = basename(file)
+        console.log("File: " + file)
+        console.log("Time: " + time)
+        console.log("Generation: " + generation)
+
+        if (series.has(file)) {
+            console.log("Series has: " + file);
+            series.get(file).append(generation, time);
+        } else {
+            console.log("Series has not: " + file);
+            var line = chart.createSeries(ChartView.SeriesTypeLine, file, axisX, axisY);
+            line.append(generation, time);
+            series.set(file, line)
+        }
+
+        axisY.max = (axisY.max > time ? axisY.max : time);
+        axisX.max = (axisX.max > generation ? axisX.max : generation);
+
     }
 }
