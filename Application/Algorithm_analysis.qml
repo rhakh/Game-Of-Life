@@ -28,7 +28,6 @@ Item {
 
             ValueAxis {
                 id: axisX
-                // labelFormat: qsTr("%d Generation")
                 gridVisible: true
                 tickCount: 5
                 min: 0
@@ -98,11 +97,24 @@ Item {
             }
 
             Button {
-                text: qsTr("Run")
+                text: isRunning ? "◼" : "▶"
                 anchors.rightMargin: 10
                 Layout.alignment: Qt.AlignLeft
                 property var series: new Map();
+                property bool isRunning: false
+                property int lastGeneration: 0
                 onClicked: {
+                    if (!isRunning) {
+                        startTests();
+                        isRunning = true;
+                    }
+                    else {
+                        stopTests();
+                        isRunning = false;
+                    }
+                }
+
+                function startTests() {
                     // clear chart series
                     chart.removeAllSeries();
                     series.clear();
@@ -111,8 +123,9 @@ Item {
 
                     // setup settings
                     algorithmRunner.setup(openMultFilesDialog.choosenFiles, finishGeneration.text, step.text, openFileDialog.choosenMap)
+                    lastGeneration = finishGeneration.text
 
-                    // run algorithms and then add results to chart
+                    // run algorithms and then add results to chart by callback function
                     algorithmRunner.run(function(file, time, generation) {
                         file = basename(file)
                         console.log("File: " + file)
@@ -126,14 +139,19 @@ Item {
                             console.log("Series has not: " + file);
                             var line = chart.createSeries(ChartView.SeriesTypeLine, file, axisX, axisY);
                             line.append(generation, time);
+                            line.pointsVisible = true;
                             series.set(file, line)
                         }
 
                         axisY.max = (axisY.max > time ? axisY.max : time);
                         axisX.max = (axisX.max > generation ? axisX.max : generation);
+                        if (generation === lastGeneration)
+                            isRunning = false;
                     })
+                }
 
-                    console.log("onClicked DONE")
+                function stopTests() {
+                    algorithmRunner.stop();
                 }
             }
         }
@@ -188,26 +206,5 @@ Item {
 
     function basename(str) {
         return (str.slice(str.lastIndexOf("/")+1))
-    }
-
-    function addResultToChart(file, time, generation) {
-        file = basename(file)
-        console.log("File: " + file)
-        console.log("Time: " + time)
-        console.log("Generation: " + generation)
-
-        if (series.has(file)) {
-            console.log("Series has: " + file);
-            series.get(file).append(generation, time);
-        } else {
-            console.log("Series has not: " + file);
-            var line = chart.createSeries(ChartView.SeriesTypeLine, file, axisX, axisY);
-            line.append(generation, time);
-            series.set(file, line)
-        }
-
-        axisY.max = (axisY.max > time ? axisY.max : time);
-        axisX.max = (axisX.max > generation ? axisX.max : generation);
-
     }
 }

@@ -10,7 +10,9 @@
 #include <QString>
 #include "AlgorithmRunner.h"
 
-AlgorithmRunner::AlgorithmRunner() {
+AlgorithmRunner::AlgorithmRunner() :
+    mLastGeneration(0), mStep(0), mMap(""), mStopSent(false)
+{
 
 }
 
@@ -71,6 +73,11 @@ void AlgorithmRunner::setup(QList<QString> files, QString lastGeneration, QStrin
     }
 }
 
+void AlgorithmRunner::stop()
+{
+    mStopSent = true;
+}
+
 void AlgorithmRunner::run(const QJSValue &callback) {
     auto runTests = [&](const QJSValue &callback) {
         QJSValue cbCopy(callback);
@@ -82,6 +89,12 @@ void AlgorithmRunner::run(const QJSValue &callback) {
             std::cout << "AlgorithmRunner: generation: " << generation << std::endl;
 
             for (auto &file: mFiles) {
+                // Testing was stopped, terminate execution of execs
+                if (mStopSent) {
+                    mStopSent = false;
+                    return;
+                }
+
                 command.str("");
 
                 std::cout << "AlgorithmRunner: file: " << file << std::endl;

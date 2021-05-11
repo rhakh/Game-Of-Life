@@ -277,14 +277,6 @@ void GameOfLifeModel::liveNGeneration(int num_of_generations)
         num_of_generations--;
     }
 
-//    auto ret = std::make_unique<Map>(this->height);
-//    for (int i = 0; i < height; i++)
-//        (*ret)[i] = std::vector<uint8_t>(width);
-
-//    for (int y = 0; y < height; y++)
-//        for (int x = 0; x < width; x++)
-//            (*ret)[y][x] = (*mMap)[y][x];
-
     return;
 }
 
