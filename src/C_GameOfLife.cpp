@@ -160,6 +160,8 @@ Map_ptr C_GameOfLife::liveNGeneration(int argc, char **argv,
                                     int num_of_generations,
                                     GOF_verbose_lvl verbose)
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     for (int i = 0; i < num_of_generations; i++) {
         liveOneGeneration();
         if (verbose == EACH_GENERATION)
@@ -176,6 +178,10 @@ Map_ptr C_GameOfLife::liveNGeneration(int argc, char **argv,
     for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
             (*ret)[y][x] = (*mMap)[y][x];
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto spend_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cout << "Spend time: " << spend_time.count() << " ms" << std::endl;
 
     return ret;
 }

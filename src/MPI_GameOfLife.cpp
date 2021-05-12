@@ -5,6 +5,9 @@
 #include <mpi.h>
 #include "MPI_GameOfLife.hpp"
 
+// Example how to run:
+// mpirun -n 6 game_of_life_mpi -f Patterns/puffer-train-big.txt
+
 int TAG = 0;  // for MPI communications
 int TAG_BORDER = 1;
 

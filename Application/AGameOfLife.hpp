@@ -5,8 +5,8 @@
 #include <memory>
 #include <vector>
 
-typedef std::vector<std::vector<uint8_t> > Map;
-typedef std::unique_ptr<std::vector<std::vector<uint8_t> > > Map_ptr;
+typedef std::vector<std::vector<uint8_t>> Map;
+typedef std::unique_ptr<std::vector<std::vector<uint8_t>>> Map_ptr;
 
 enum GOF_verbose_lvl {
     NO_PRINTS,
