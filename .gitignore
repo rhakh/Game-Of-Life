@@ -10,7 +10,7 @@ a.out
 .vscode
 .ccls-cache
 Application/Application.pro.user
-Application/Application.pro.user*
+Application/Application.pro.user.*
 game_of_life_concurrent
 game_of_life_mpi
 game_of_life_serial

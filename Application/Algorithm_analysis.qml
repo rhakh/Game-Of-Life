@@ -4,7 +4,6 @@ import QtCharts 2.15
 import QtQuick.Window 2.3
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
-import QtQuick.Dialogs 1.3
 import Qt.labs.platform 1.1
 
 Item {

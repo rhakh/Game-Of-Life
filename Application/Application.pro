@@ -47,8 +47,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     AlgorithmRunner.h \
-    CLI.hpp \
-    GameOfLife.hpp \
     GameOfLifeModel.hpp
 
 DISTFILES += \
